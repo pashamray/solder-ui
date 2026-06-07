@@ -23,8 +23,10 @@ ui_settings_t g_settings = {
     .units           = 0,
     .ch1_type        = CH_TYPE_IRON,
     .ch2_type        = CH_TYPE_IRON,
-    .ch1_presets     = {200, 280, 320, 380},
-    .ch2_presets     = {200, 280, 320, 380},
+    .ch1_presets     = {200, 280, 350},
+    .ch2_presets     = {200, 280, 350},
+    .ch1_en          = 1,
+    .ch2_en          = 1,
     .ch1_airflow     = 50,
     .ch2_airflow     = 50,
     .temp_step       = 5,
@@ -66,11 +68,11 @@ void ui_nvs_load(void)
     nvs_get_u16(h, "ch1_p0",   &g_settings.ch1_presets[0]);
     nvs_get_u16(h, "ch1_p1",   &g_settings.ch1_presets[1]);
     nvs_get_u16(h, "ch1_p2",   &g_settings.ch1_presets[2]);
-    nvs_get_u16(h, "ch1_p3",   &g_settings.ch1_presets[3]);
     nvs_get_u16(h, "ch2_p0",   &g_settings.ch2_presets[0]);
     nvs_get_u16(h, "ch2_p1",   &g_settings.ch2_presets[1]);
     nvs_get_u16(h, "ch2_p2",   &g_settings.ch2_presets[2]);
-    nvs_get_u16(h, "ch2_p3",   &g_settings.ch2_presets[3]);
+    nvs_get_u8 (h, "ch1_en",   &g_settings.ch1_en);
+    nvs_get_u8 (h, "ch2_en",   &g_settings.ch2_en);
     nvs_get_u8 (h, "ch1_aflo", &g_settings.ch1_airflow);
     nvs_get_u8 (h, "ch2_aflo", &g_settings.ch2_airflow);
     nvs_get_u8 (h, "t_step",   &g_settings.temp_step);
@@ -107,11 +109,11 @@ static void nvs_save_cb(lv_timer_t *t)
     nvs_set_u16(h, "ch1_p0",   g_settings.ch1_presets[0]);
     nvs_set_u16(h, "ch1_p1",   g_settings.ch1_presets[1]);
     nvs_set_u16(h, "ch1_p2",   g_settings.ch1_presets[2]);
-    nvs_set_u16(h, "ch1_p3",   g_settings.ch1_presets[3]);
     nvs_set_u16(h, "ch2_p0",   g_settings.ch2_presets[0]);
     nvs_set_u16(h, "ch2_p1",   g_settings.ch2_presets[1]);
     nvs_set_u16(h, "ch2_p2",   g_settings.ch2_presets[2]);
-    nvs_set_u16(h, "ch2_p3",   g_settings.ch2_presets[3]);
+    nvs_set_u8 (h, "ch1_en",   g_settings.ch1_en);
+    nvs_set_u8 (h, "ch2_en",   g_settings.ch2_en);
     nvs_set_u8 (h, "ch1_aflo", g_settings.ch1_airflow);
     nvs_set_u8 (h, "ch2_aflo", g_settings.ch2_airflow);
     nvs_set_u8 (h, "t_step",   g_settings.temp_step);

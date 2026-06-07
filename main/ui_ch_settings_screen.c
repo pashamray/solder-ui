@@ -15,7 +15,7 @@
 /* ------------------------------------------------------------------ */
 
 /* Preset value labels: [ch][preset_idx] */
-static lv_obj_t *s_preset_lbl[2][4];
+static lv_obj_t *s_preset_lbl[2][3];
 /* Airflow value label per channel */
 static lv_obj_t *s_af_lbl[2];
 /* Tool type buttons: [ch][0=iron, 1=gun] */
@@ -224,10 +224,10 @@ static void create_ch_settings_screen(lv_obj_t **handle, int ch)
     refresh_type_btn_styles(ch);
 
     /* ── Preset rows ── */
-    static const char *preset_names[4] = { "P1", "P2", "P3", "P4" };
+    static const char *preset_names[3] = { "P1", "P2", "P3" };
     uint16_t *presets = (ch == 0) ? g_settings.ch1_presets : g_settings.ch2_presets;
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 3; i++) {
         char val_buf[16];
         snprintf(val_buf, sizeof(val_buf), "%d", to_disp((int)presets[i]));
 

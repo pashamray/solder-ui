@@ -41,7 +41,8 @@ typedef struct {
     lv_obj_t *lbl_af;
     lv_obj_t *power_cover;
     lv_obj_t *lbl_pwr;
-    lv_obj_t *preset_btns[4];
+    lv_obj_t *preset_btns[3];
+    lv_obj_t *ch_en_btn;
     int        mock_pwr;
 } ch_state_t;
 
@@ -54,11 +55,19 @@ static int        s_clock_sec = 43200;
 /* ------------------------------------------------------------------ */
 /*  Preset highlight                                                   */
 /* ------------------------------------------------------------------ */
+static void update_ch_en_btn(int ch)
+{
+    lv_obj_t *btn = s_ch[ch].ch_en_btn;
+    if (!btn) return;
+    bool en = (ch == 0) ? g_settings.ch1_en : g_settings.ch2_en;
+    lv_obj_set_style_bg_color(btn, en ? ui_color_accent() : lv_color_hex(0x5a1010), 0);
+}
+
 static void update_preset_highlight(int ch)
 {
     uint16_t *presets = (ch == 0) ? g_settings.ch1_presets : g_settings.ch2_presets;
     uint16_t  sp      = (ch == 0) ? g_settings.ch1_sp      : g_settings.ch2_sp;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 3; i++) {
         lv_obj_t *btn = s_ch[ch].preset_btns[i];
         if (!btn) continue;
         bool active = (presets[i] == sp);
@@ -132,6 +141,15 @@ static void on_preset(lv_event_t *e)
     update_preset_highlight(ch);
     ui_nvs_save_debounced();
 }
+static void on_ch_toggle(lv_event_t *e)
+{
+    int ch = (int)(uintptr_t)lv_event_get_user_data(e);
+    uint8_t *en = (ch == 0) ? &g_settings.ch1_en : &g_settings.ch2_en;
+    *en = !*en;
+    update_ch_en_btn(ch);
+    ui_nvs_save_debounced();
+}
+
 static void on_open_settings(lv_event_t *e)
 {
     (void)e;
@@ -462,7 +480,7 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
         lv_obj_set_width(sp_cell, LV_PCT(100));
     }
 
-    /* ── Preset bar (bottom, flex row SPACE_EVENLY) ── */
+    /* ── Preset bar: 3 square presets + 1 channel-enable button ── */
     lv_obj_t *pbar = lv_obj_create(panel);
     lv_obj_remove_flag(pbar, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_size(pbar, LV_PCT(100), PRESET_BAR_H);
@@ -472,15 +490,16 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
     lv_obj_set_style_pad_hor(pbar, 8, 0);
     lv_obj_set_style_pad_ver(pbar, 0, 0);
     lv_obj_set_flex_flow(pbar, LV_FLEX_FLOW_ROW);
-    lv_obj_set_style_flex_main_place(pbar, LV_FLEX_ALIGN_SPACE_EVENLY, 0);
+    lv_obj_set_style_flex_main_place(pbar, LV_FLEX_ALIGN_START, 0);
     lv_obj_set_style_flex_cross_place(pbar, LV_FLEX_ALIGN_CENTER, 0);
+    lv_obj_set_style_pad_column(pbar, 8, 0);
 
     uint16_t *presets = (ch == 0) ? g_settings.ch1_presets : g_settings.ch2_presets;
     uint16_t sp = (ch == 0) ? g_settings.ch1_sp : g_settings.ch2_sp;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 3; i++) {
         lv_obj_t *btn = lv_obj_create(pbar);
         lv_obj_remove_flag(btn, LV_OBJ_FLAG_SCROLLABLE);
-        lv_obj_set_size(btn, PRESET_BTN_W, PRESET_BTN_H);
+        lv_obj_set_size(btn, CTRL_BTN_SZ, CTRL_BTN_SZ);
         lv_obj_set_style_radius(btn, 8, 0);
         lv_obj_set_style_border_width(btn, 0, 0);
         lv_obj_set_style_pad_all(btn, 0, 0);
@@ -497,6 +516,25 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
         lv_obj_align(lbl, LV_ALIGN_CENTER, 0, 0);
         s_ch[ch].preset_btns[i] = btn;
     }
+
+    /* Channel enable/disable button — takes remaining width */
+    lv_obj_t *en_btn = lv_obj_create(pbar);
+    lv_obj_remove_flag(en_btn, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_height(en_btn, CTRL_BTN_SZ);
+    lv_obj_set_width(en_btn, 0);
+    lv_obj_set_flex_grow(en_btn, 1);
+    lv_obj_set_style_radius(en_btn, 8, 0);
+    lv_obj_set_style_border_width(en_btn, 0, 0);
+    lv_obj_set_style_pad_all(en_btn, 0, 0);
+    lv_obj_add_flag(en_btn, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(en_btn, on_ch_toggle, LV_EVENT_CLICKED, ud);
+    lv_obj_t *en_lbl = lv_label_create(en_btn);
+    lv_label_set_text(en_lbl, LV_SYMBOL_POWER);
+    lv_obj_set_style_text_font(en_lbl, &roboto_cyrillic_16, 0);
+    lv_obj_set_style_text_color(en_lbl, lv_color_white(), 0);
+    lv_obj_align(en_lbl, LV_ALIGN_CENTER, 0, 0);
+    s_ch[ch].ch_en_btn = en_btn;
+    update_ch_en_btn(ch);
 }
 
 /* ------------------------------------------------------------------ */
@@ -530,7 +568,7 @@ void ui_main_screen_prepare_destroy(void)
     lbl_time     = NULL;
     lbl_unit_ind = NULL;
     lbl_bell     = NULL;
-    memset(s_ch, 0, sizeof(s_ch));
+    memset(s_ch, 0, sizeof(s_ch)); /* clears preset_btns, ch_en_btn, etc. */
 }
 
 void ui_main_screen_refresh_sp(void)
@@ -538,6 +576,7 @@ void ui_main_screen_refresh_sp(void)
     for (int ch = 0; ch < 2; ch++) {
         refresh_sp_label(ch);
         update_preset_highlight(ch);
+        update_ch_en_btn(ch);
     }
 }
 

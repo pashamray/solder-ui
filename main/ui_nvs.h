@@ -22,8 +22,10 @@ typedef struct {
     /* per-channel */
     uint8_t  ch1_type;           /* CH_TYPE_IRON / CH_TYPE_GUN */
     uint8_t  ch2_type;
-    uint16_t ch1_presets[4];     /* quick-access temperature presets */
-    uint16_t ch2_presets[4];
+    uint16_t ch1_presets[3];     /* quick-access temperature presets */
+    uint16_t ch2_presets[3];
+    uint8_t  ch1_en;             /* channel enabled */
+    uint8_t  ch2_en;
     uint8_t  ch1_airflow;        /* airflow % setpoint (gun only) */
     uint8_t  ch2_airflow;
     uint8_t  temp_step;          /* temperature step in °C (1–20) */
