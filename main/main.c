@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <time.h>
+#include <sys/time.h>
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_check.h"
@@ -375,6 +377,20 @@ void app_main(void)
 
     /* LVGL initialization */
     ESP_ERROR_CHECK(app_lvgl_init());
+
+    /* Set RTC to 2026-01-01 12:00:00 */
+    {
+        struct tm t = {
+            .tm_year = 2026 - 1900,
+            .tm_mon  = 0,
+            .tm_mday = 1,
+            .tm_hour = 12,
+            .tm_min  = 0,
+            .tm_sec  = 0,
+        };
+        struct timeval tv = { .tv_sec = mktime(&t), .tv_usec = 0 };
+        settimeofday(&tv, NULL);
+    }
 
     /* Show LVGL objects */
     app_ui_init();

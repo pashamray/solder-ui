@@ -1,3 +1,4 @@
+#include <time.h>
 #include "fonts/fonts.h"
 #include "ui_main_screen.h"
 #include "ui_init.h"
@@ -54,7 +55,6 @@ static ch_state_t s_ch[2];
 static lv_obj_t  *lbl_time;
 static lv_obj_t  *lbl_unit_ind;
 static lv_obj_t  *lbl_bell;
-static int        s_clock_sec = 43200;
 
 /* ------------------------------------------------------------------ */
 /*  Preset highlight                                                   */
@@ -172,12 +172,13 @@ static void on_open_settings(lv_event_t *e)
 static void timer_clock_cb(lv_timer_t *t)
 {
     (void)t;
-    s_clock_sec++;
-    if (s_clock_sec >= 86400) s_clock_sec = 0;
     if (!lbl_time) return;
+    time_t now = time(NULL);
+    struct tm tm;
+    localtime_r(&now, &tm);
     char buf[16];
     snprintf(buf, sizeof(buf), "%02d:%02d:%02d",
-             s_clock_sec/3600, (s_clock_sec%3600)/60, s_clock_sec%60);
+             tm.tm_hour, tm.tm_min, tm.tm_sec);
     lv_label_set_text(lbl_time, buf);
 }
 
@@ -763,7 +764,6 @@ void ui_main_screen_create(void)
     create_channel_panel(scr, 1);
     create_divider(scr);
 
-    s_clock_sec = 43200;
     static lv_timer_t *s_clock_timer = NULL;
     if (!s_clock_timer)
         s_clock_timer = lv_timer_create(timer_clock_cb, 1000, NULL);
