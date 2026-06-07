@@ -42,9 +42,14 @@ void ui_profiles_screen_create(void)
         lv_obj_set_style_text_font(lbl, &roboto_cyrillic_16, 0);
         lv_obj_align(lbl, LV_ALIGN_LEFT_MID, 0, 0);
 
-        /* PID summary */
-        char info[40];
-        lv_snprintf(info, sizeof(info), "Kp%d Ki%d Kd%d  %+d\xc2\xb0",
+        /* PID + tool type summary */
+        char info[56];
+        const char *type_str = (g_profiles[i].tool_type == CH_TYPE_IRON)
+            ? IRON_SUBTYPE_NAMES[g_profiles[i].iron_subtype < IRON_SUBTYPE_COUNT
+                                 ? g_profiles[i].iron_subtype : 0]
+            : "Gun";
+        lv_snprintf(info, sizeof(info), "%s  Kp%d Ki%d Kd%d  %+d\xc2\xb0",
+                    type_str,
                     (int)g_profiles[i].pid_kp,
                     (int)g_profiles[i].pid_ki,
                     (int)g_profiles[i].pid_kd,

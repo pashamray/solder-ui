@@ -16,23 +16,62 @@
 static int            s_edit_idx;   /* -1 = new */
 static ui_profile_t   s_buf;        /* working copy */
 
-/* Value labels for live update */
+/* Value labels / widgets for live update */
 static lv_obj_t *s_kp_lbl;
 static lv_obj_t *s_ki_lbl;
 static lv_obj_t *s_kd_lbl;
 static lv_obj_t *s_off_lbl;
 static lv_obj_t *s_ta;
 static lv_obj_t *s_kb;
+static lv_obj_t *s_type_btns[2];      /* [0]=Iron [1]=Gun */
+static lv_obj_t *s_subtype_btns[IRON_SUBTYPE_COUNT];
+static lv_obj_t *s_subtype_row;       /* row hidden when tool_type == GUN */
+static lv_obj_t *s_apply_btn[2];      /* Apply CH1, Apply CH2 */
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                             */
 /* ------------------------------------------------------------------ */
-static void update_labels(void)
+static void refresh_type_ui(void)
 {
-    if (s_kp_lbl)  lv_label_set_text_fmt(s_kp_lbl,  "%d",  s_buf.pid_kp);
-    if (s_ki_lbl)  lv_label_set_text_fmt(s_ki_lbl,  "%d",  s_buf.pid_ki);
-    if (s_kd_lbl)  lv_label_set_text_fmt(s_kd_lbl,  "%d",  s_buf.pid_kd);
-    if (s_off_lbl) lv_label_set_text_fmt(s_off_lbl, "%+d", (int)s_buf.temp_offset);
+    /* Tool type toggle buttons */
+    for (int i = 0; i < 2; i++) {
+        if (!s_type_btns[i]) continue;
+        bool sel = ((int)s_buf.tool_type == i);
+        lv_obj_set_style_bg_color(s_type_btns[i], sel ? ui_color_accent() : ui_color_border(), 0);
+        lv_obj_t *lbl = lv_obj_get_child(s_type_btns[i], 0);
+        if (lbl) lv_obj_set_style_text_color(lbl,
+            sel ? lv_color_white() : ui_color_text_secondary(), 0);
+    }
+    /* Iron subtype row visibility */
+    if (s_subtype_row) {
+        if (s_buf.tool_type == CH_TYPE_IRON)
+            lv_obj_remove_flag(s_subtype_row, LV_OBJ_FLAG_HIDDEN);
+        else
+            lv_obj_add_flag(s_subtype_row, LV_OBJ_FLAG_HIDDEN);
+    }
+    /* Iron subtype buttons */
+    for (int i = 0; i < IRON_SUBTYPE_COUNT; i++) {
+        if (!s_subtype_btns[i]) continue;
+        bool sel = ((int)s_buf.iron_subtype == i);
+        lv_obj_set_style_bg_color(s_subtype_btns[i], sel ? ui_color_accent() : ui_color_border(), 0);
+        lv_obj_t *lbl = lv_obj_get_child(s_subtype_btns[i], 0);
+        if (lbl) lv_obj_set_style_text_color(lbl,
+            sel ? lv_color_white() : ui_color_text_secondary(), 0);
+    }
+    /* Apply buttons: disabled if channel type mismatches profile type */
+    for (int ch = 0; ch < 2; ch++) {
+        if (!s_apply_btn[ch]) continue;
+        uint8_t ch_type = (ch == 0) ? g_settings.ch1_type : g_settings.ch2_type;
+        bool ok = (ch_type == s_buf.tool_type);
+        if (ok) {
+            lv_obj_remove_state(s_apply_btn[ch], LV_STATE_DISABLED);
+            lv_obj_set_style_bg_color(s_apply_btn[ch],
+                (ch == 0) ? ui_color_ch1() : ui_color_ch2(), 0);
+        } else {
+            lv_obj_add_state(s_apply_btn[ch], LV_STATE_DISABLED);
+            lv_obj_set_style_bg_color(s_apply_btn[ch], ui_color_border(), 0);
+        }
+    }
 }
 
 /* Make a small ± adjustment row, returns value label */
@@ -139,6 +178,20 @@ static void off_cb(lv_event_t *e) {
     if (s_off_lbl) lv_label_set_text_fmt(s_off_lbl, "%+d", (int)s_buf.temp_offset);
 }
 
+static void type_btn_cb(lv_event_t *e)
+{
+    int t = (int)(intptr_t)lv_event_get_user_data(e);
+    s_buf.tool_type = (uint8_t)t;
+    refresh_type_ui();
+}
+
+static void subtype_btn_cb(lv_event_t *e)
+{
+    int st = (int)(intptr_t)lv_event_get_user_data(e);
+    s_buf.iron_subtype = (uint8_t)st;
+    refresh_type_ui();
+}
+
 static void save_cb(lv_event_t *e)
 {
     (void)e;
@@ -181,15 +234,17 @@ static void apply_ch_cb(lv_event_t *e)
 {
     int ch = (int)(intptr_t)lv_event_get_user_data(e);
     if (ch == 0) {
-        g_settings.ch1_pid_kp      = s_buf.pid_kp;
-        g_settings.ch1_pid_ki      = s_buf.pid_ki;
-        g_settings.ch1_pid_kd      = s_buf.pid_kd;
-        g_settings.ch1_temp_offset = s_buf.temp_offset;
+        g_settings.ch1_pid_kp       = s_buf.pid_kp;
+        g_settings.ch1_pid_ki       = s_buf.pid_ki;
+        g_settings.ch1_pid_kd       = s_buf.pid_kd;
+        g_settings.ch1_temp_offset  = s_buf.temp_offset;
+        g_settings.ch1_iron_subtype = s_buf.iron_subtype;
     } else {
-        g_settings.ch2_pid_kp      = s_buf.pid_kp;
-        g_settings.ch2_pid_ki      = s_buf.pid_ki;
-        g_settings.ch2_pid_kd      = s_buf.pid_kd;
-        g_settings.ch2_temp_offset = s_buf.temp_offset;
+        g_settings.ch2_pid_kp       = s_buf.pid_kp;
+        g_settings.ch2_pid_ki       = s_buf.pid_ki;
+        g_settings.ch2_pid_kd       = s_buf.pid_kd;
+        g_settings.ch2_temp_offset  = s_buf.temp_offset;
+        g_settings.ch2_iron_subtype = s_buf.iron_subtype;
     }
     ui_nvs_save_debounced();
 }
@@ -254,6 +309,88 @@ static void build_screen(void)
     lv_obj_add_event_cb(ta, ta_event_cb, LV_EVENT_ALL, NULL);
     s_ta = ta;
 
+    /* Tool type row */
+    {
+        lv_obj_t *type_row = lv_obj_create(body);
+        lv_obj_remove_style_all(type_row);
+        lv_obj_set_size(type_row, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_remove_flag(type_row, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_style_bg_color(type_row, ui_color_surface(), 0);
+        lv_obj_set_style_bg_opa(type_row, LV_OPA_COVER, 0);
+        lv_obj_set_style_radius(type_row, 8, 0);
+        lv_obj_set_style_pad_all(type_row, 12, 0);
+
+        lv_obj_t *tlbl = lv_label_create(type_row);
+        lv_label_set_text(tlbl, ui_lang->tool_type);
+        lv_obj_set_style_text_font(tlbl, &roboto_cyrillic_16, 0);
+        lv_obj_set_style_text_color(tlbl, ui_color_text_secondary(), 0);
+        lv_obj_align(tlbl, LV_ALIGN_LEFT_MID, 0, 0);
+
+        lv_obj_t *tcont = lv_obj_create(type_row);
+        lv_obj_remove_style_all(tcont);
+        lv_obj_remove_flag(tcont, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_size(tcont, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+        lv_obj_set_flex_flow(tcont, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(tcont, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
+        lv_obj_set_style_pad_column(tcont, 8, 0);
+        lv_obj_align(tcont, LV_ALIGN_RIGHT_MID, 0, 0);
+
+        const char *tlabels[2] = { ui_lang->tool_iron, ui_lang->tool_gun };
+        for (int i = 0; i < 2; i++) {
+            lv_obj_t *tb = lv_obj_create(tcont);
+            lv_obj_set_size(tb, LV_SIZE_CONTENT, 36);
+            lv_obj_remove_flag(tb, LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_set_style_radius(tb, 6, 0);
+            lv_obj_set_style_border_width(tb, 0, 0);
+            lv_obj_set_style_bg_color(tb, ui_color_border(), 0);
+            lv_obj_set_style_pad_hor(tb, 14, 0);
+            lv_obj_set_style_pad_ver(tb, 0, 0);
+            lv_obj_add_flag(tb, LV_OBJ_FLAG_CLICKABLE);
+            lv_obj_add_event_cb(tb, type_btn_cb, LV_EVENT_CLICKED, (void*)(intptr_t)i);
+            lv_obj_t *tl = lv_label_create(tb);
+            lv_label_set_text(tl, tlabels[i]);
+            lv_obj_set_style_text_font(tl, &roboto_cyrillic_16, 0);
+            lv_obj_set_style_text_color(tl, ui_color_text_secondary(), 0);
+            lv_obj_align(tl, LV_ALIGN_CENTER, 0, 0);
+            s_type_btns[i] = tb;
+        }
+    }
+
+    /* Iron subtype row */
+    {
+        lv_obj_t *srow = lv_obj_create(body);
+        lv_obj_remove_style_all(srow);
+        lv_obj_set_size(srow, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_remove_flag(srow, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_style_bg_color(srow, ui_color_surface(), 0);
+        lv_obj_set_style_bg_opa(srow, LV_OPA_COVER, 0);
+        lv_obj_set_style_radius(srow, 8, 0);
+        lv_obj_set_style_pad_all(srow, 12, 0);
+        lv_obj_set_flex_flow(srow, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(srow, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_style_pad_column(srow, 8, 0);
+        s_subtype_row = srow;
+
+        for (int i = 0; i < IRON_SUBTYPE_COUNT; i++) {
+            lv_obj_t *sb = lv_obj_create(srow);
+            lv_obj_set_size(sb, LV_SIZE_CONTENT, 36);
+            lv_obj_remove_flag(sb, LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_set_style_radius(sb, 6, 0);
+            lv_obj_set_style_border_width(sb, 0, 0);
+            lv_obj_set_style_bg_color(sb, ui_color_border(), 0);
+            lv_obj_set_style_pad_hor(sb, 14, 0);
+            lv_obj_set_style_pad_ver(sb, 0, 0);
+            lv_obj_add_flag(sb, LV_OBJ_FLAG_CLICKABLE);
+            lv_obj_add_event_cb(sb, subtype_btn_cb, LV_EVENT_CLICKED, (void*)(intptr_t)i);
+            lv_obj_t *sl = lv_label_create(sb);
+            lv_label_set_text(sl, IRON_SUBTYPE_NAMES[i]);
+            lv_obj_set_style_text_font(sl, &roboto_cyrillic_16, 0);
+            lv_obj_set_style_text_color(sl, ui_color_text_secondary(), 0);
+            lv_obj_align(sl, LV_ALIGN_CENTER, 0, 0);
+            s_subtype_btns[i] = sb;
+        }
+    }
+
     /* PID and offset rows */
     char buf[16];
 
@@ -279,36 +416,36 @@ static void build_screen(void)
     lv_obj_set_style_pad_column(btn_row, 8, 0);
 
     /* Apply CH1 */
-    lv_obj_t *b1 = lv_obj_create(btn_row);
-    lv_obj_set_size(b1, LV_SIZE_CONTENT, 40);
-    lv_obj_set_style_bg_color(b1, ui_color_ch1(), 0);
-    lv_obj_set_style_bg_opa(b1, LV_OPA_COVER, 0);
-    lv_obj_set_style_radius(b1, 8, 0);
-    lv_obj_set_style_border_width(b1, 0, 0);
-    lv_obj_set_style_pad_hor(b1, 16, 0);
-    lv_obj_set_style_pad_ver(b1, 0, 0);
-    lv_obj_remove_flag(b1, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_add_flag(b1, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(b1, apply_ch_cb, LV_EVENT_CLICKED, (void*)(intptr_t)0);
-    lv_obj_t *l1 = lv_label_create(b1);
+    s_apply_btn[0] = lv_obj_create(btn_row);
+    lv_obj_set_size(s_apply_btn[0], LV_SIZE_CONTENT, 40);
+    lv_obj_set_style_bg_color(s_apply_btn[0], ui_color_ch1(), 0);
+    lv_obj_set_style_bg_opa(s_apply_btn[0], LV_OPA_COVER, 0);
+    lv_obj_set_style_radius(s_apply_btn[0], 8, 0);
+    lv_obj_set_style_border_width(s_apply_btn[0], 0, 0);
+    lv_obj_set_style_pad_hor(s_apply_btn[0], 16, 0);
+    lv_obj_set_style_pad_ver(s_apply_btn[0], 0, 0);
+    lv_obj_remove_flag(s_apply_btn[0], LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(s_apply_btn[0], LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(s_apply_btn[0], apply_ch_cb, LV_EVENT_CLICKED, (void*)(intptr_t)0);
+    lv_obj_t *l1 = lv_label_create(s_apply_btn[0]);
     lv_label_set_text(l1, ui_lang->apply_ch1);
     lv_obj_set_style_text_font(l1, &roboto_cyrillic_14, 0);
     lv_obj_set_style_text_color(l1, lv_color_white(), 0);
     lv_obj_align(l1, LV_ALIGN_CENTER, 0, 0);
 
     /* Apply CH2 */
-    lv_obj_t *b2 = lv_obj_create(btn_row);
-    lv_obj_set_size(b2, LV_SIZE_CONTENT, 40);
-    lv_obj_set_style_bg_color(b2, ui_color_ch2(), 0);
-    lv_obj_set_style_bg_opa(b2, LV_OPA_COVER, 0);
-    lv_obj_set_style_radius(b2, 8, 0);
-    lv_obj_set_style_border_width(b2, 0, 0);
-    lv_obj_set_style_pad_hor(b2, 16, 0);
-    lv_obj_set_style_pad_ver(b2, 0, 0);
-    lv_obj_remove_flag(b2, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_add_flag(b2, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(b2, apply_ch_cb, LV_EVENT_CLICKED, (void*)(intptr_t)1);
-    lv_obj_t *l2 = lv_label_create(b2);
+    s_apply_btn[1] = lv_obj_create(btn_row);
+    lv_obj_set_size(s_apply_btn[1], LV_SIZE_CONTENT, 40);
+    lv_obj_set_style_bg_color(s_apply_btn[1], ui_color_ch2(), 0);
+    lv_obj_set_style_bg_opa(s_apply_btn[1], LV_OPA_COVER, 0);
+    lv_obj_set_style_radius(s_apply_btn[1], 8, 0);
+    lv_obj_set_style_border_width(s_apply_btn[1], 0, 0);
+    lv_obj_set_style_pad_hor(s_apply_btn[1], 16, 0);
+    lv_obj_set_style_pad_ver(s_apply_btn[1], 0, 0);
+    lv_obj_remove_flag(s_apply_btn[1], LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(s_apply_btn[1], LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(s_apply_btn[1], apply_ch_cb, LV_EVENT_CLICKED, (void*)(intptr_t)1);
+    lv_obj_t *l2 = lv_label_create(s_apply_btn[1]);
     lv_label_set_text(l2, ui_lang->apply_ch2);
     lv_obj_set_style_text_font(l2, &roboto_cyrillic_14, 0);
     lv_obj_set_style_text_color(l2, lv_color_white(), 0);
@@ -352,6 +489,9 @@ static void build_screen(void)
         lv_obj_align(ldel, LV_ALIGN_CENTER, 0, 0);
     }
 
+    /* Set initial visual state for type/subtype/apply buttons */
+    refresh_type_ui();
+
     /* Keyboard — child of the screen itself, anchored to bottom, hidden until ta focused */
     lv_obj_t *kb = lv_keyboard_create(scr_profile_edit);
     lv_keyboard_set_textarea(kb, ta);
@@ -374,6 +514,10 @@ void ui_profile_edit_open(int idx)
     s_edit_idx = idx;
     s_kp_lbl = s_ki_lbl = s_kd_lbl = s_off_lbl = NULL;
     s_ta = s_kb = NULL;
+    s_type_btns[0] = s_type_btns[1] = NULL;
+    s_subtype_row = NULL;
+    s_apply_btn[0] = s_apply_btn[1] = NULL;
+    for (int i = 0; i < IRON_SUBTYPE_COUNT; i++) s_subtype_btns[i] = NULL;
 
     if (idx < 0) {
         /* new profile defaults */
