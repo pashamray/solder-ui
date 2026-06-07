@@ -20,11 +20,9 @@
 #define CH_HDR_H       50   /* channel header height   */
 #define PRESET_BAR_H   66   /* preset bar height       */
 #define CTRL_BTN_SZ    64   /* ±button / value box     */
-/* preset bar: 4 presets + 1 en_btn (2× wide); inner width = CH_W - 2*8 = 496
-   gaps = 4*8 = 32 → 6*w = 464 → w ≈ 77 */
-#define PRESET_BTN_W   77
+#define PRESET_BTN_W   CTRL_BTN_SZ  /* square */
 #define PRESET_BTN_H   CTRL_BTN_SZ
-#define EN_BTN_W       (PRESET_BTN_W * 2)
+#define EN_BTN_W       CTRL_BTN_SZ  /* square, pushed to right by spacer */
 
 #define PWR_BAR_H      14   /* horizontal power bar height */
 
@@ -631,7 +629,14 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
         s_ch[ch].preset_btns[i] = btn;
     }
 
-    /* Channel enable/disable button — explicitly 2× preset width */
+    /* Spacer pushes en_btn to the right */
+    lv_obj_t *spacer = lv_obj_create(pbar);
+    lv_obj_remove_style_all(spacer);
+    lv_obj_remove_flag(spacer, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_size(spacer, 0, PRESET_BTN_H);
+    lv_obj_set_flex_grow(spacer, 1);
+
+    /* Channel enable/disable button — square, right side */
     lv_obj_t *en_btn = lv_obj_create(pbar);
     lv_obj_remove_flag(en_btn, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_size(en_btn, EN_BTN_W, PRESET_BTN_H);
