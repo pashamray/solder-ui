@@ -1,0 +1,7 @@
+build/
+sdkconfig.old
+*.pyc
+__pycache__/
+.superpowers/
+docs/
+managed_components/

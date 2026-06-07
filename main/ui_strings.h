@@ -1,0 +1,49 @@
+#pragma once
+#include <stdint.h>
+typedef struct {
+    const char *channel_1;
+    const char *channel_2;
+    const char *current_temp;
+    const char *setpoint;
+    const char *settings;
+    const char *back;
+    const char *sound;
+    const char *sleep;
+    const char *display;
+    const char *units;
+    const char *profiles;
+    const char *about;
+    const char *lang_label;
+    const char *theme_label;
+    const char *theme_dark;
+    const char *theme_light;
+    const char *brightness;
+    const char *bl_timeout;
+    const char *bl_1min;
+    const char *bl_5min;
+    const char *bl_never;
+    const char *units_c;
+    const char *units_f;
+    const char *sleep_timer_label;
+    const char *sleep_temp_label;
+    const char *sl_2min;
+    const char *sl_10min;
+    const char *save_current;
+    const char *factory_reset;
+    const char *confirm_factory_reset;
+    const char *confirm_yes;
+    const char *confirm_no;
+    const char *firmware;
+    const char *uptime;
+    /* channel settings */
+    const char *tool_type;
+    const char *tool_iron;
+    const char *tool_gun;
+    const char *airflow;
+    const char *pwr_label;
+    const char *temp_step;
+} ui_strings_t;
+extern const ui_strings_t *ui_lang;
+void ui_strings_init(void);
+void ui_strings_set(uint8_t lang_idx);
+void ui_strings_refresh(void);
