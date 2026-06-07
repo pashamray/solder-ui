@@ -90,6 +90,7 @@ void app_ui_init(void)
     ui_strings_init();
     ui_nvs_load();
     ui_theme_apply((ui_theme_t)g_settings.theme);
+    ui_theme_set_ch_colors(g_settings.ch1_color_idx, g_settings.ch2_color_idx);
     ui_strings_set(g_settings.language);
 
     UI_CREATE(ui_main_screen_create);

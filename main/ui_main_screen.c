@@ -20,8 +20,11 @@
 #define CH_HDR_H       50   /* channel header height   */
 #define PRESET_BAR_H   66   /* preset bar height       */
 #define CTRL_BTN_SZ    64   /* ±button / value box     */
-#define PRESET_BTN_W   112
-#define PRESET_BTN_H   50
+/* preset bar: 4 presets + 1 en_btn (2× wide); inner width = CH_W - 2*8 = 496
+   gaps = 4*8 = 32 → 6*w = 464 → w ≈ 77 */
+#define PRESET_BTN_W   77
+#define PRESET_BTN_H   CTRL_BTN_SZ
+#define EN_BTN_W       (PRESET_BTN_W * 2)
 
 #define PWR_BAR_H      14   /* horizontal power bar height */
 
@@ -41,7 +44,7 @@ typedef struct {
     lv_obj_t *lbl_af;
     lv_obj_t *power_cover;
     lv_obj_t *lbl_pwr;
-    lv_obj_t *preset_btns[3];
+    lv_obj_t *preset_btns[4];
     lv_obj_t *ch_en_btn;
     int        mock_pwr;
 } ch_state_t;
@@ -60,18 +63,23 @@ static void update_ch_en_btn(int ch)
     lv_obj_t *btn = s_ch[ch].ch_en_btn;
     if (!btn) return;
     bool en = (ch == 0) ? g_settings.ch1_en : g_settings.ch2_en;
-    lv_obj_set_style_bg_color(btn, en ? ui_color_accent() : lv_color_hex(0x5a1010), 0);
+    lv_color_t ch_col = (ch == 0) ? ui_color_ch1() : ui_color_ch2();
+    lv_obj_set_style_bg_color(btn, en ? ch_col : ui_color_border(), 0);
+    lv_obj_t *lbl = lv_obj_get_child(btn, 0);
+    if (lbl)
+        lv_obj_set_style_text_color(lbl, en ? lv_color_white() : ui_color_text_primary(), 0);
 }
 
 static void update_preset_highlight(int ch)
 {
     uint16_t *presets = (ch == 0) ? g_settings.ch1_presets : g_settings.ch2_presets;
     uint16_t  sp      = (ch == 0) ? g_settings.ch1_sp      : g_settings.ch2_sp;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         lv_obj_t *btn = s_ch[ch].preset_btns[i];
         if (!btn) continue;
         bool active = (presets[i] == sp);
-        lv_obj_set_style_bg_color(btn, active ? ui_color_accent() : ui_color_border(), 0);
+        lv_color_t ch_col = (ch == 0) ? ui_color_ch1() : ui_color_ch2();
+        lv_obj_set_style_bg_color(btn, active ? ch_col : ui_color_border(), 0);
         lv_obj_t *lbl = lv_obj_get_child(btn, 0);
         if (lbl) {
             lv_label_set_text_fmt(lbl, "%d", to_disp((int)presets[i]));
@@ -480,7 +488,7 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
         lv_obj_set_width(sp_cell, LV_PCT(100));
     }
 
-    /* ── Preset bar: 3 square presets + 1 channel-enable button ── */
+    /* ── Preset bar: 4 presets + 1 channel-enable button (2× wide) ── */
     lv_obj_t *pbar = lv_obj_create(panel);
     lv_obj_remove_flag(pbar, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_size(pbar, LV_PCT(100), PRESET_BAR_H);
@@ -496,16 +504,17 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
 
     uint16_t *presets = (ch == 0) ? g_settings.ch1_presets : g_settings.ch2_presets;
     uint16_t sp = (ch == 0) ? g_settings.ch1_sp : g_settings.ch2_sp;
-    for (int i = 0; i < 3; i++) {
+    lv_color_t ch_col = (ch == 0) ? ui_color_ch1() : ui_color_ch2();
+    for (int i = 0; i < 4; i++) {
         lv_obj_t *btn = lv_obj_create(pbar);
         lv_obj_remove_flag(btn, LV_OBJ_FLAG_SCROLLABLE);
-        lv_obj_set_size(btn, CTRL_BTN_SZ, CTRL_BTN_SZ);
+        lv_obj_set_size(btn, PRESET_BTN_W, PRESET_BTN_H);
         lv_obj_set_style_radius(btn, 8, 0);
         lv_obj_set_style_border_width(btn, 0, 0);
         lv_obj_set_style_pad_all(btn, 0, 0);
         lv_obj_add_flag(btn, LV_OBJ_FLAG_CLICKABLE);
         bool active = (presets[i] == sp);
-        lv_obj_set_style_bg_color(btn, active ? ui_color_accent() : ui_color_border(), 0);
+        lv_obj_set_style_bg_color(btn, active ? ch_col : ui_color_border(), 0);
         lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, 0);
         uintptr_t pud = ((uintptr_t)ch << 8) | (uintptr_t)i;
         lv_obj_add_event_cb(btn, on_preset, LV_EVENT_CLICKED, (void *)pud);
@@ -517,12 +526,10 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
         s_ch[ch].preset_btns[i] = btn;
     }
 
-    /* Channel enable/disable button — takes remaining width */
+    /* Channel enable/disable button — explicitly 2× preset width */
     lv_obj_t *en_btn = lv_obj_create(pbar);
     lv_obj_remove_flag(en_btn, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_height(en_btn, CTRL_BTN_SZ);
-    lv_obj_set_width(en_btn, 0);
-    lv_obj_set_flex_grow(en_btn, 1);
+    lv_obj_set_size(en_btn, EN_BTN_W, PRESET_BTN_H);
     lv_obj_set_style_radius(en_btn, 8, 0);
     lv_obj_set_style_border_width(en_btn, 0, 0);
     lv_obj_set_style_pad_all(en_btn, 0, 0);
@@ -530,7 +537,7 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
     lv_obj_add_event_cb(en_btn, on_ch_toggle, LV_EVENT_CLICKED, ud);
     lv_obj_t *en_lbl = lv_label_create(en_btn);
     lv_label_set_text(en_lbl, LV_SYMBOL_POWER);
-    lv_obj_set_style_text_font(en_lbl, &roboto_cyrillic_16, 0);
+    lv_obj_set_style_text_font(en_lbl, &lv_font_montserrat_16, 0);
     lv_obj_set_style_text_color(en_lbl, lv_color_white(), 0);
     lv_obj_align(en_lbl, LV_ALIGN_CENTER, 0, 0);
     s_ch[ch].ch_en_btn = en_btn;
@@ -583,6 +590,17 @@ void ui_main_screen_refresh_sp(void)
 void ui_main_screen_refresh_presets(int ch)
 {
     update_preset_highlight(ch);
+}
+
+void ui_main_screen_update_ch_color(int ch)
+{
+    lv_color_t col = (ch == 0) ? ui_color_ch1() : ui_color_ch2();
+    if (s_ch[ch].lbl_temp)
+        lv_obj_set_style_text_color(s_ch[ch].lbl_temp, col, 0);
+    if (s_ch[ch].lbl_sp)
+        lv_obj_set_style_text_color(s_ch[ch].lbl_sp, col, 0);
+    update_preset_highlight(ch);
+    update_ch_en_btn(ch);
 }
 
 void ui_main_screen_update_units(void)

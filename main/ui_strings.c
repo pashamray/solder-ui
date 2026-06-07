@@ -44,6 +44,7 @@ static const ui_strings_t LANG_RU = {
     .beep_touch             = "Бип при касании",
     .alert_overheat         = "Алерт перегрева",
     .alert_ready            = "Сигнал прогрева",
+    .ch_color               = "Цвет канала",
 };
 
 static const ui_strings_t LANG_EN = {
@@ -90,6 +91,7 @@ static const ui_strings_t LANG_EN = {
     .beep_touch             = "Touch beep",
     .alert_overheat         = "Overheat alert",
     .alert_ready            = "Ready alert",
+    .ch_color               = "Channel color",
 };
 
 static const ui_strings_t LANG_DE = {
@@ -136,6 +138,7 @@ static const ui_strings_t LANG_DE = {
     .beep_touch             = "Berührungs-Beep",
     .alert_overheat         = "Überhitzungsalarm",
     .alert_ready            = "Bereit-Signal",
+    .ch_color               = "Kanalfarbe",
 };
 
 static const ui_strings_t LANG_UK = {
@@ -182,6 +185,7 @@ static const ui_strings_t LANG_UK = {
     .beep_touch             = "Біп при торканні",
     .alert_overheat         = "Алерт перегріву",
     .alert_ready            = "Сигнал прогріву",
+    .ch_color               = "Колір каналу",
 };
 
 #define LANG_COUNT 4

@@ -10,18 +10,23 @@
 #include <string.h>
 #include <stdio.h>
 
+#define SWATCH_SZ  36
+#define SWATCH_GAP  6
+
 /* ------------------------------------------------------------------ */
 /*  Shared state — both channel screens share the same callbacks        */
 /* ------------------------------------------------------------------ */
 
 /* Preset value labels: [ch][preset_idx] */
-static lv_obj_t *s_preset_lbl[2][3];
+static lv_obj_t *s_preset_lbl[2][4];
 /* Airflow value label per channel */
 static lv_obj_t *s_af_lbl[2];
 /* Tool type buttons: [ch][0=iron, 1=gun] */
 static lv_obj_t *s_type_btns[2][2];
 /* Airflow row container (shown only for gun) */
 static lv_obj_t *s_af_row[2];
+/* Color swatches: [ch][color_idx] */
+static lv_obj_t *s_color_swatches[2][CH_COLOR_COUNT];
 
 /* °C or °F display of a temperature */
 static int to_disp(int c) { return g_settings.units ? c * 9 / 5 + 32 : c; }
@@ -52,6 +57,42 @@ static void refresh_af_row_visibility(int ch)
         lv_obj_remove_flag(s_af_row[ch], LV_OBJ_FLAG_HIDDEN);
     else
         lv_obj_add_flag(s_af_row[ch], LV_OBJ_FLAG_HIDDEN);
+}
+
+static void refresh_color_swatches(int ch)
+{
+    uint8_t sel = (ch == 0) ? g_settings.ch1_color_idx : g_settings.ch2_color_idx;
+    for (int i = 0; i < CH_COLOR_COUNT; i++) {
+        lv_obj_t *sw = s_color_swatches[ch][i];
+        if (!sw) continue;
+        if (i == sel) {
+            /* dark inner border + white outer outline: visible on any swatch color */
+            lv_obj_set_style_border_color(sw, lv_color_hex(0x222222), 0);
+            lv_obj_set_style_border_width(sw, 3, 0);
+            lv_obj_set_style_outline_color(sw, lv_color_white(), 0);
+            lv_obj_set_style_outline_width(sw, 3, 0);
+            lv_obj_set_style_outline_pad(sw, 3, 0);
+            lv_obj_set_style_outline_opa(sw, LV_OPA_COVER, 0);
+        } else {
+            lv_obj_set_style_border_width(sw, 0, 0);
+            lv_obj_set_style_outline_width(sw, 0, 0);
+        }
+    }
+}
+
+static void color_swatch_cb(lv_event_t *e)
+{
+    uintptr_t data = (uintptr_t)lv_event_get_user_data(e);
+    int ch  = (int)(data >> 8);
+    int idx = (int)(data & 0xFF);
+
+    if (ch == 0) g_settings.ch1_color_idx = (uint8_t)idx;
+    else         g_settings.ch2_color_idx = (uint8_t)idx;
+
+    ui_theme_set_ch_colors(g_settings.ch1_color_idx, g_settings.ch2_color_idx);
+    refresh_color_swatches(ch);
+    ui_main_screen_update_ch_color(ch);
+    ui_nvs_save_debounced();
 }
 
 /* ------------------------------------------------------------------ */
@@ -224,10 +265,10 @@ static void create_ch_settings_screen(lv_obj_t **handle, int ch)
     refresh_type_btn_styles(ch);
 
     /* ── Preset rows ── */
-    static const char *preset_names[3] = { "P1", "P2", "P3" };
+    static const char *preset_names[4] = { "P1", "P2", "P3", "P4" };
     uint16_t *presets = (ch == 0) ? g_settings.ch1_presets : g_settings.ch2_presets;
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         char val_buf[16];
         snprintf(val_buf, sizeof(val_buf), "%d", to_disp((int)presets[i]));
 
@@ -302,6 +343,35 @@ static void create_ch_settings_screen(lv_obj_t **handle, int ch)
 
         refresh_af_row_visibility(ch);
     }
+
+    /* ── Channel color row ── */
+    {
+        lv_obj_t *row = ui_sub_row_create(body, ui_lang->ch_color, NULL);
+
+        lv_obj_t *cont = lv_obj_create(row);
+        lv_obj_remove_style_all(cont);
+        lv_obj_remove_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_size(cont, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+        lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
+        lv_obj_set_style_pad_column(cont, SWATCH_GAP, 0);
+        lv_obj_align(cont, LV_ALIGN_LEFT_MID, 0, 0);
+
+        for (int i = 0; i < CH_COLOR_COUNT; i++) {
+            lv_obj_t *sw = lv_obj_create(cont);
+            lv_obj_remove_flag(sw, LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_set_size(sw, SWATCH_SZ, SWATCH_SZ);
+            lv_obj_set_style_radius(sw, 6, 0);
+            lv_obj_set_style_bg_color(sw, CH_COLORS[i], 0);
+            lv_obj_set_style_bg_opa(sw, LV_OPA_COVER, 0);
+            lv_obj_set_style_pad_all(sw, 0, 0);
+            lv_obj_add_flag(sw, LV_OBJ_FLAG_CLICKABLE);
+            uintptr_t ud = ((uintptr_t)ch << 8) | (uintptr_t)i;
+            lv_obj_add_event_cb(sw, color_swatch_cb, LV_EVENT_CLICKED, (void *)ud);
+            s_color_swatches[ch][i] = sw;
+        }
+        refresh_color_swatches(ch);
+    }
 }
 
 /* ------------------------------------------------------------------ */
@@ -311,8 +381,9 @@ static void create_ch_settings_screen(lv_obj_t **handle, int ch)
 void ui_ch1_settings_screen_create(void)
 {
     /* Clear stale handles for ch0 */
-    memset(s_preset_lbl[0], 0, sizeof(s_preset_lbl[0]));
-    memset(s_type_btns[0],  0, sizeof(s_type_btns[0]));
+    memset(s_preset_lbl[0],      0, sizeof(s_preset_lbl[0]));
+    memset(s_type_btns[0],       0, sizeof(s_type_btns[0]));
+    memset(s_color_swatches[0],  0, sizeof(s_color_swatches[0]));
     s_af_lbl[0] = NULL;
     s_af_row[0] = NULL;
 
@@ -321,8 +392,9 @@ void ui_ch1_settings_screen_create(void)
 
 void ui_ch2_settings_screen_create(void)
 {
-    memset(s_preset_lbl[1], 0, sizeof(s_preset_lbl[1]));
-    memset(s_type_btns[1],  0, sizeof(s_type_btns[1]));
+    memset(s_preset_lbl[1],      0, sizeof(s_preset_lbl[1]));
+    memset(s_type_btns[1],       0, sizeof(s_type_btns[1]));
+    memset(s_color_swatches[1],  0, sizeof(s_color_swatches[1]));
     s_af_lbl[1] = NULL;
     s_af_row[1] = NULL;
 

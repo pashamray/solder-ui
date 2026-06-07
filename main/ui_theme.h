@@ -1,6 +1,10 @@
 #pragma once
 #include "lvgl.h"
+#include <stdint.h>
 typedef enum { THEME_DARK = 0, THEME_LIGHT = 1 } ui_theme_t;
+
+#define CH_COLOR_COUNT 8
+extern const lv_color_t CH_COLORS[CH_COLOR_COUNT];
 typedef struct {
     lv_color_t bg;
     lv_color_t surface;
@@ -19,6 +23,7 @@ extern ui_palette_t g_pal;
 extern ui_theme_t   g_theme;
 void ui_theme_init(void);
 void ui_theme_apply(ui_theme_t t);
+void ui_theme_set_ch_colors(uint8_t idx1, uint8_t idx2);
 static inline lv_color_t ui_color_bg(void)             { return g_pal.bg; }
 static inline lv_color_t ui_color_surface(void)        { return g_pal.surface; }
 static inline lv_color_t ui_color_border(void)         { return g_pal.border; }

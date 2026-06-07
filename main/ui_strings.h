@@ -45,6 +45,7 @@ typedef struct {
     const char *beep_touch;
     const char *alert_overheat;
     const char *alert_ready;
+    const char *ch_color;
 } ui_strings_t;
 extern const ui_strings_t *ui_lang;
 void ui_strings_init(void);

@@ -1,5 +1,16 @@
 #include "ui_theme.h"
 
+const lv_color_t CH_COLORS[CH_COLOR_COUNT] = {
+    { .red = 0xe9, .green = 0x45, .blue = 0x60 },  /* 0 red     */
+    { .red = 0x4a, .green = 0x9e, .blue = 0xff },  /* 1 blue    */
+    { .red = 0xff, .green = 0x6b, .blue = 0x35 },  /* 2 orange  */
+    { .red = 0x2e, .green = 0xcc, .blue = 0x71 },  /* 3 green   */
+    { .red = 0x9b, .green = 0x59, .blue = 0xb6 },  /* 4 purple  */
+    { .red = 0x1a, .green = 0xbc, .blue = 0x9c },  /* 5 teal    */
+    { .red = 0xf1, .green = 0xc4, .blue = 0x0f },  /* 6 yellow  */
+    { .red = 0xff, .green = 0x69, .blue = 0xb4 },  /* 7 pink    */
+};
+
 ui_palette_t g_pal;
 ui_theme_t   g_theme = THEME_DARK;
 
@@ -44,4 +55,10 @@ void ui_theme_apply(ui_theme_t t)
     g_pal   = (t == THEME_LIGHT) ? PAL_LIGHT : PAL_DARK;
     lv_obj_t *scr = lv_screen_active();
     if (scr) lv_obj_invalidate(scr);
+}
+
+void ui_theme_set_ch_colors(uint8_t idx1, uint8_t idx2)
+{
+    if (idx1 < CH_COLOR_COUNT) g_pal.ch1 = CH_COLORS[idx1];
+    if (idx2 < CH_COLOR_COUNT) g_pal.ch2 = CH_COLORS[idx2];
 }
