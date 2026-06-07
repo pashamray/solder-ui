@@ -11,6 +11,8 @@ typedef struct {
     uint8_t pid_kp;        /* 0..99 */
     uint8_t pid_ki;        /* 0..99 */
     uint8_t pid_kd;        /* 0..99 */
+    uint8_t tool_type;     /* CH_TYPE_IRON / CH_TYPE_GUN */
+    uint8_t iron_subtype;  /* IRON_SUBTYPE_* (when tool_type == CH_TYPE_IRON) */
 } ui_profile_t;
 
 extern ui_profile_t g_profiles[MAX_PROFILES];
@@ -19,6 +21,16 @@ extern uint8_t      g_profile_cnt;
 /* Channel tool type */
 #define CH_TYPE_IRON   0
 #define CH_TYPE_GUN    1   /* hot air gun — has airflow setpoint */
+
+/* Iron cartridge/tip subtypes */
+#define IRON_SUBTYPE_T12   0
+#define IRON_SUBTYPE_T15   1
+#define IRON_SUBTYPE_C210  2
+#define IRON_SUBTYPE_C245  3
+#define IRON_SUBTYPE_JL02  4
+#define IRON_SUBTYPE_NT115 5
+#define IRON_SUBTYPE_COUNT 6
+extern const char * const IRON_SUBTYPE_NAMES[IRON_SUBTYPE_COUNT];
 
 typedef struct {
     uint16_t ch1_sp;
@@ -37,6 +49,8 @@ typedef struct {
     /* per-channel */
     uint8_t  ch1_type;           /* CH_TYPE_IRON / CH_TYPE_GUN */
     uint8_t  ch2_type;
+    uint8_t  ch1_iron_subtype;   /* IRON_SUBTYPE_* */
+    uint8_t  ch2_iron_subtype;
     uint16_t ch1_presets[4];     /* quick-access temperature presets */
     uint16_t ch2_presets[4];
     uint8_t  ch1_en;             /* channel enabled */

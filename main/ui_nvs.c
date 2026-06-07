@@ -9,6 +9,10 @@
 ui_profile_t g_profiles[MAX_PROFILES];
 uint8_t      g_profile_cnt = 0;
 
+const char * const IRON_SUBTYPE_NAMES[IRON_SUBTYPE_COUNT] = {
+    "T12", "T15", "C210", "C245", "JL02", "NT115",
+};
+
 #define NVS_NS "solder_ui"
 static const char *TAG = "ui_nvs";
 
@@ -28,6 +32,8 @@ ui_settings_t g_settings = {
     .units           = 0,
     .ch1_type        = CH_TYPE_IRON,
     .ch2_type        = CH_TYPE_IRON,
+    .ch1_iron_subtype = IRON_SUBTYPE_T12,
+    .ch2_iron_subtype = IRON_SUBTYPE_T12,
     .ch1_presets     = {180, 250, 320, 400},
     .ch2_presets     = {180, 250, 320, 400},
     .ch1_en          = 1,
@@ -74,6 +80,8 @@ void ui_nvs_load(void)
     nvs_get_u8 (h, "units",    &g_settings.units);
     nvs_get_u8 (h, "ch1_type", &g_settings.ch1_type);
     nvs_get_u8 (h, "ch2_type", &g_settings.ch2_type);
+    nvs_get_u8 (h, "ch1_isub", &g_settings.ch1_iron_subtype);
+    nvs_get_u8 (h, "ch2_isub", &g_settings.ch2_iron_subtype);
     nvs_get_u16(h, "ch1_p0",   &g_settings.ch1_presets[0]);
     nvs_get_u16(h, "ch1_p1",   &g_settings.ch1_presets[1]);
     nvs_get_u16(h, "ch1_p2",   &g_settings.ch1_presets[2]);
@@ -119,6 +127,10 @@ void ui_nvs_load(void)
             snprintf(key, sizeof(key), "p%d_off", i);
             uint8_t off = 0; nvs_get_u8(ph, key, &off);
             g_profiles[i].temp_offset = (int8_t)off;
+            snprintf(key, sizeof(key), "p%d_tt", i);
+            nvs_get_u8(ph, key, &g_profiles[i].tool_type);
+            snprintf(key, sizeof(key), "p%d_is", i);
+            nvs_get_u8(ph, key, &g_profiles[i].iron_subtype);
         }
         nvs_close(ph);
     }
@@ -150,6 +162,8 @@ static void nvs_save_cb(lv_timer_t *t)
     nvs_set_u8 (h, "units",    g_settings.units);
     nvs_set_u8 (h, "ch1_type", g_settings.ch1_type);
     nvs_set_u8 (h, "ch2_type", g_settings.ch2_type);
+    nvs_set_u8 (h, "ch1_isub", g_settings.ch1_iron_subtype);
+    nvs_set_u8 (h, "ch2_isub", g_settings.ch2_iron_subtype);
     nvs_set_u16(h, "ch1_p0",   g_settings.ch1_presets[0]);
     nvs_set_u16(h, "ch1_p1",   g_settings.ch1_presets[1]);
     nvs_set_u16(h, "ch1_p2",   g_settings.ch1_presets[2]);
@@ -203,6 +217,10 @@ void ui_nvs_save_profiles(void)
         nvs_set_u8(h, key, g_profiles[i].pid_kd);
         snprintf(key, sizeof(key), "p%d_off", i);
         nvs_set_u8(h, key, (uint8_t)g_profiles[i].temp_offset);
+        snprintf(key, sizeof(key), "p%d_tt", i);
+        nvs_set_u8(h, key, g_profiles[i].tool_type);
+        snprintf(key, sizeof(key), "p%d_is", i);
+        nvs_set_u8(h, key, g_profiles[i].iron_subtype);
     }
     nvs_commit(h);
     nvs_close(h);
