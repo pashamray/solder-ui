@@ -281,9 +281,9 @@ static lv_obj_t *create_ctrl_row(lv_obj_t *body,
     obj_clear(row);
     lv_obj_set_size(row, LV_PCT(100), CTRL_BTN_SZ);
     lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
-    lv_obj_set_style_flex_main_place(row, LV_FLEX_ALIGN_CENTER, 0);
+    lv_obj_set_style_flex_main_place(row, LV_FLEX_ALIGN_SPACE_BETWEEN, 0);
     lv_obj_set_style_flex_cross_place(row, LV_FLEX_ALIGN_CENTER, 0);
-    lv_obj_set_style_pad_column(row, 20, 0);
+    lv_obj_set_style_pad_column(row, 0, 0);
     lv_obj_set_style_pad_hor(row, 0, 0);
     lv_obj_set_style_pad_ver(row, 0, 0);
 
