@@ -39,12 +39,12 @@ void ui_sound_screen_create(void)
     lv_obj_t *r1 = ui_sub_row_create(body, ui_lang->sound, NULL);
     ui_toggle_create(r1, g_settings.sound_en, sound_en_cb, NULL);
 
-    lv_obj_t *r2 = ui_sub_row_create(body, "Бип при касании", NULL);
+    lv_obj_t *r2 = ui_sub_row_create(body, ui_lang->beep_touch, NULL);
     ui_toggle_create(r2, g_settings.beep_touch, beep_touch_cb, NULL);
 
-    lv_obj_t *r3 = ui_sub_row_create(body, "Алерт перегрева", NULL);
+    lv_obj_t *r3 = ui_sub_row_create(body, ui_lang->alert_overheat, NULL);
     ui_toggle_create(r3, g_settings.alert_overheat, alert_overheat_cb, NULL);
 
-    lv_obj_t *r4 = ui_sub_row_create(body, "Сигнал прогрева", NULL);
+    lv_obj_t *r4 = ui_sub_row_create(body, ui_lang->alert_ready, NULL);
     ui_toggle_create(r4, g_settings.alert_ready, alert_ready_cb, NULL);
 }

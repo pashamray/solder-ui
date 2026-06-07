@@ -42,6 +42,9 @@ typedef struct {
     const char *airflow;
     const char *pwr_label;
     const char *temp_step;
+    const char *beep_touch;
+    const char *alert_overheat;
+    const char *alert_ready;
 } ui_strings_t;
 extern const ui_strings_t *ui_lang;
 void ui_strings_init(void);

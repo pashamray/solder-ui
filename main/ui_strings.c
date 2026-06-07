@@ -41,6 +41,9 @@ static const ui_strings_t LANG_RU = {
     .airflow                = "Поток",
     .pwr_label              = "МОЩ",
     .temp_step              = "Шаг температуры",
+    .beep_touch             = "Бип при касании",
+    .alert_overheat         = "Алерт перегрева",
+    .alert_ready            = "Сигнал прогрева",
 };
 
 static const ui_strings_t LANG_EN = {
@@ -84,6 +87,9 @@ static const ui_strings_t LANG_EN = {
     .airflow                = "Airflow",
     .pwr_label              = "PWR",
     .temp_step              = "Temp step",
+    .beep_touch             = "Touch beep",
+    .alert_overheat         = "Overheat alert",
+    .alert_ready            = "Ready alert",
 };
 
 static const ui_strings_t LANG_DE = {
@@ -127,6 +133,9 @@ static const ui_strings_t LANG_DE = {
     .airflow                = "Luftstrom",
     .pwr_label              = "PWR",
     .temp_step              = "Temp-Schritt",
+    .beep_touch             = "Berührungs-Beep",
+    .alert_overheat         = "Überhitzungsalarm",
+    .alert_ready            = "Bereit-Signal",
 };
 
 static const ui_strings_t LANG_UK = {
@@ -170,6 +179,9 @@ static const ui_strings_t LANG_UK = {
     .airflow                = "Потік",
     .pwr_label              = "МОЩ",
     .temp_step              = "Крок температури",
+    .beep_touch             = "Біп при торканні",
+    .alert_overheat         = "Алерт перегріву",
+    .alert_ready            = "Сигнал прогріву",
 };
 
 #define LANG_COUNT 4
