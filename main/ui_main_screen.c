@@ -415,6 +415,23 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
     lv_obj_set_style_text_font(lbl_name, &roboto_cyrillic_12, 0);
     lv_obj_align(lbl_name, LV_ALIGN_LEFT_MID, 12, 0);
 
+    /* Tool type / subtype — right */
+    {
+        char type_buf[24];
+        if (ch_type == CH_TYPE_GUN) {
+            snprintf(type_buf, sizeof(type_buf), "%s", ui_lang->tool_gun);
+        } else {
+            uint8_t sub = (ch == 0) ? g_settings.ch1_iron_subtype : g_settings.ch2_iron_subtype;
+            if (sub >= IRON_SUBTYPE_COUNT) sub = 0;
+            snprintf(type_buf, sizeof(type_buf), "%s", IRON_SUBTYPE_NAMES[sub]);
+        }
+        lv_obj_t *lbl_type = lv_label_create(hdr);
+        lv_label_set_text(lbl_type, type_buf);
+        lv_obj_set_style_text_color(lbl_type, ui_color_text_muted(), 0);
+        lv_obj_set_style_text_font(lbl_type, &roboto_cyrillic_12, 0);
+        lv_obj_align(lbl_type, LV_ALIGN_RIGHT_MID, -12, 0);
+    }
+
     /* Profile dropdown — centered in header */
     {
         char dd_opts[MAX_PROFILES * (PROFILE_NAME_LEN + 1) + 8];
