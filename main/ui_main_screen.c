@@ -598,7 +598,7 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
     lv_obj_set_style_bg_opa(pbar, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(pbar, 0, 0);
     lv_obj_set_style_radius(pbar, 0, 0);
-    lv_obj_set_style_pad_hor(pbar, 8, 0);
+    lv_obj_set_style_pad_hor(pbar, 16, 0);
     lv_obj_set_style_pad_ver(pbar, 0, 0);
     lv_obj_set_flex_flow(pbar, LV_FLEX_FLOW_ROW);
     lv_obj_set_style_flex_main_place(pbar, LV_FLEX_ALIGN_START, 0);
