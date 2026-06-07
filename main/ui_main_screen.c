@@ -438,6 +438,7 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
         lv_obj_set_style_pad_ver(dd, 0, LV_PART_MAIN);
         lv_obj_set_style_shadow_width(dd, 0, LV_PART_MAIN);
         lv_obj_set_style_text_color(dd, ui_color_text_secondary(), LV_PART_INDICATOR);
+        lv_obj_set_style_text_font(dd, &lv_font_montserrat_16, LV_PART_INDICATOR);
 
         lv_obj_t *list = lv_dropdown_get_list(dd);
         if (list) {
