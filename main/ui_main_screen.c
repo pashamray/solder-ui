@@ -46,6 +46,7 @@ typedef struct {
     lv_obj_t *lbl_pwr;
     lv_obj_t *preset_btns[4];
     lv_obj_t *ch_en_btn;
+    lv_obj_t *profile_dd;
     int        mock_pwr;
 } ch_state_t;
 
@@ -326,6 +327,48 @@ static lv_obj_t *make_ctrl_cell(lv_obj_t *parent, const char *title,
 }
 
 /* ------------------------------------------------------------------ */
+/*  Profile dropdown helpers                                           */
+/* ------------------------------------------------------------------ */
+static void build_dd_opts(char *buf, int sz)
+{
+    int pos = snprintf(buf, sz, "---");
+    for (int i = 0; i < (int)g_profile_cnt && pos < sz - 2; i++) {
+        buf[pos++] = '\n';
+        int n = snprintf(buf + pos, sz - pos, "%s", g_profiles[i].name);
+        if (n > 0) pos += n;
+    }
+}
+
+static void apply_profile_to_ch(int ch, int idx)
+{
+    if (idx < 0 || idx >= (int)g_profile_cnt) return;
+    const ui_profile_t *p = &g_profiles[idx];
+    if (ch == 0) {
+        g_settings.ch1_pid_kp       = p->pid_kp;
+        g_settings.ch1_pid_ki       = p->pid_ki;
+        g_settings.ch1_pid_kd       = p->pid_kd;
+        g_settings.ch1_temp_offset  = p->temp_offset;
+        g_settings.ch1_iron_subtype = p->iron_subtype;
+    } else {
+        g_settings.ch2_pid_kp       = p->pid_kp;
+        g_settings.ch2_pid_ki       = p->pid_ki;
+        g_settings.ch2_pid_kd       = p->pid_kd;
+        g_settings.ch2_temp_offset  = p->temp_offset;
+        g_settings.ch2_iron_subtype = p->iron_subtype;
+    }
+    ui_nvs_save_debounced();
+}
+
+static void on_profile_dd(lv_event_t *e)
+{
+    int ch = (int)(uintptr_t)lv_event_get_user_data(e);
+    lv_obj_t *dd = lv_event_get_target_obj(e);
+    uint32_t sel = lv_dropdown_get_selected(dd);
+    if (sel == 0) return;
+    apply_profile_to_ch(ch, (int)sel - 1);
+}
+
+/* ------------------------------------------------------------------ */
 /*  Channel panel                                                      */
 /*                                                                     */
 /*  Flex column layout:                                                */
@@ -372,14 +415,45 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
     lv_obj_set_style_text_font(lbl_name, &roboto_cyrillic_12, 0);
     lv_obj_align(lbl_name, LV_ALIGN_LEFT_MID, 12, 0);
 
-    /* Tool type — centered across full header width */
-    lv_obj_t *lbl_type = lv_label_create(hdr);
-    lv_label_set_text(lbl_type, (ch_type == CH_TYPE_GUN) ? ui_lang->tool_gun : "T12-BC2");
-    lv_obj_set_style_text_color(lbl_type, ui_color_ch2(), 0);
-    lv_obj_set_style_text_font(lbl_type, &roboto_cyrillic_12, 0);
-    lv_obj_set_width(lbl_type, LV_PCT(100));
-    lv_obj_set_style_text_align(lbl_type, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(lbl_type, LV_ALIGN_LEFT_MID, 0, 0);
+    /* Profile dropdown — centered in header */
+    {
+        char dd_opts[MAX_PROFILES * (PROFILE_NAME_LEN + 1) + 8];
+        build_dd_opts(dd_opts, sizeof(dd_opts));
+
+        lv_obj_t *dd = lv_dropdown_create(hdr);
+        lv_dropdown_set_options(dd, dd_opts);
+        lv_obj_set_size(dd, 220, 32);
+        lv_obj_align(dd, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_add_event_cb(dd, on_profile_dd, LV_EVENT_VALUE_CHANGED,
+                            (void *)(uintptr_t)ch);
+
+        lv_obj_set_style_bg_color(dd, ui_color_surface(), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(dd, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_border_color(dd, ui_color_border(), LV_PART_MAIN);
+        lv_obj_set_style_border_width(dd, 1, LV_PART_MAIN);
+        lv_obj_set_style_radius(dd, 6, LV_PART_MAIN);
+        lv_obj_set_style_text_color(dd, ui_color_text_primary(), LV_PART_MAIN);
+        lv_obj_set_style_text_font(dd, &roboto_cyrillic_14, LV_PART_MAIN);
+        lv_obj_set_style_pad_hor(dd, 10, LV_PART_MAIN);
+        lv_obj_set_style_pad_ver(dd, 0, LV_PART_MAIN);
+        lv_obj_set_style_shadow_width(dd, 0, LV_PART_MAIN);
+        lv_obj_set_style_text_color(dd, ui_color_text_secondary(), LV_PART_INDICATOR);
+
+        lv_obj_t *list = lv_dropdown_get_list(dd);
+        if (list) {
+            lv_obj_set_style_bg_color(list, ui_color_surface(), LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(list, LV_OPA_COVER, LV_PART_MAIN);
+            lv_obj_set_style_border_color(list, ui_color_border(), LV_PART_MAIN);
+            lv_obj_set_style_border_width(list, 1, LV_PART_MAIN);
+            lv_obj_set_style_text_color(list, ui_color_text_primary(), LV_PART_MAIN);
+            lv_obj_set_style_text_font(list, &roboto_cyrillic_14, LV_PART_MAIN);
+            lv_obj_set_style_bg_color(list, ui_color_accent(), LV_PART_SELECTED);
+            lv_obj_set_style_bg_opa(list, LV_OPA_COVER, LV_PART_SELECTED);
+            lv_obj_set_style_text_color(list, lv_color_white(), LV_PART_SELECTED);
+        }
+
+        s_ch[ch].profile_dd = dd;
+    }
 
     /* ── Header divider (1 px) ── */
     lv_obj_t *div_h = lv_obj_create(panel);
@@ -620,6 +694,20 @@ void ui_main_screen_update_units(void)
             if (lbl)
                 lv_label_set_text_fmt(lbl, "%d", to_disp((int)presets[i]));
         }
+    }
+}
+
+void ui_main_screen_refresh_profile_dropdowns(void)
+{
+    char opts[MAX_PROFILES * (PROFILE_NAME_LEN + 1) + 8];
+    build_dd_opts(opts, sizeof(opts));
+    for (int ch = 0; ch < 2; ch++) {
+        lv_obj_t *dd = s_ch[ch].profile_dd;
+        if (!dd) continue;
+        uint32_t prev = lv_dropdown_get_selected(dd);
+        lv_dropdown_set_options(dd, opts);
+        uint32_t cnt = (uint32_t)g_profile_cnt + 1;
+        lv_dropdown_set_selected(dd, prev < cnt ? prev : 0);
     }
 }
 

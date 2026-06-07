@@ -6,3 +6,4 @@ void ui_main_screen_refresh_sp(void);
 void ui_main_screen_refresh_presets(int ch);
 void ui_main_screen_update_sound(void);
 void ui_main_screen_update_ch_color(int ch);
+void ui_main_screen_refresh_profile_dropdowns(void);

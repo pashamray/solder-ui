@@ -1,6 +1,7 @@
 #include "fonts/fonts.h"
 #include "ui_profile_edit_screen.h"
 #include "ui_profiles_screen.h"
+#include "ui_main_screen.h"
 #include "ui_init.h"
 #include "ui_sub_screen.h"
 #include "ui_theme.h"
@@ -211,6 +212,7 @@ static void save_cb(lv_event_t *e)
         g_profiles[s_edit_idx] = s_buf;
     }
     ui_nvs_save_profiles();
+    ui_main_screen_refresh_profile_dropdowns();
     if (scr_profiles) { lv_obj_delete(scr_profiles); scr_profiles = NULL; }
     ui_profiles_screen_create();
     lv_screen_load(scr_profiles);
@@ -224,6 +226,7 @@ static void delete_cb(lv_event_t *e)
             g_profiles[i] = g_profiles[i + 1];
         g_profile_cnt--;
         ui_nvs_save_profiles();
+        ui_main_screen_refresh_profile_dropdowns();
     }
     if (scr_profiles) { lv_obj_delete(scr_profiles); scr_profiles = NULL; }
     ui_profiles_screen_create();
