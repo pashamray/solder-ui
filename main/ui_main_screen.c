@@ -47,6 +47,8 @@ typedef struct {
     lv_obj_t *preset_btns[4];
     lv_obj_t *ch_en_btn;
     lv_obj_t *profile_dd;
+    int        dd_map[MAX_PROFILES]; /* dd_map[i] = g_profiles index for list item i+1 */
+    int        dd_map_cnt;
     int        mock_pwr;
 } ch_state_t;
 
@@ -329,14 +331,22 @@ static lv_obj_t *make_ctrl_cell(lv_obj_t *parent, const char *title,
 /* ------------------------------------------------------------------ */
 /*  Profile dropdown helpers                                           */
 /* ------------------------------------------------------------------ */
-static void build_dd_opts(char *buf, int sz)
+static void build_dd_opts(char *buf, int sz, int ch, int *map, int *map_cnt)
 {
+    uint8_t ch_type = (ch == 0) ? g_settings.ch1_type : g_settings.ch2_type;
+    uint8_t ch_sub  = (ch == 0) ? g_settings.ch1_iron_subtype : g_settings.ch2_iron_subtype;
     int pos = snprintf(buf, sz, "---");
+    int cnt = 0;
     for (int i = 0; i < (int)g_profile_cnt && pos < sz - 2; i++) {
+        if (g_profiles[i].tool_type != ch_type) continue;
+        if (ch_type == CH_TYPE_IRON && g_profiles[i].iron_subtype != ch_sub) continue;
         buf[pos++] = '\n';
         int n = snprintf(buf + pos, sz - pos, "%s", g_profiles[i].name);
         if (n > 0) pos += n;
+        if (map && cnt < MAX_PROFILES) map[cnt] = i;
+        cnt++;
     }
+    if (map_cnt) *map_cnt = cnt;
 }
 
 static void apply_profile_to_ch(int ch, int idx)
@@ -365,7 +375,9 @@ static void on_profile_dd(lv_event_t *e)
     lv_obj_t *dd = lv_event_get_target_obj(e);
     uint32_t sel = lv_dropdown_get_selected(dd);
     if (sel == 0) return;
-    apply_profile_to_ch(ch, (int)sel - 1);
+    int map_idx = (int)sel - 1;
+    if (map_idx >= s_ch[ch].dd_map_cnt) return;
+    apply_profile_to_ch(ch, s_ch[ch].dd_map[map_idx]);
 }
 
 /* ------------------------------------------------------------------ */
@@ -435,7 +447,8 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
     /* Profile dropdown — centered in header */
     {
         char dd_opts[MAX_PROFILES * (PROFILE_NAME_LEN + 1) + 8];
-        build_dd_opts(dd_opts, sizeof(dd_opts));
+        build_dd_opts(dd_opts, sizeof(dd_opts), ch,
+                      s_ch[ch].dd_map, &s_ch[ch].dd_map_cnt);
 
         lv_obj_t *dd = lv_dropdown_create(hdr);
         lv_dropdown_set_options(dd, dd_opts);
@@ -718,14 +731,13 @@ void ui_main_screen_update_units(void)
 void ui_main_screen_refresh_profile_dropdowns(void)
 {
     char opts[MAX_PROFILES * (PROFILE_NAME_LEN + 1) + 8];
-    build_dd_opts(opts, sizeof(opts));
     for (int ch = 0; ch < 2; ch++) {
         lv_obj_t *dd = s_ch[ch].profile_dd;
         if (!dd) continue;
-        uint32_t prev = lv_dropdown_get_selected(dd);
+        build_dd_opts(opts, sizeof(opts), ch,
+                      s_ch[ch].dd_map, &s_ch[ch].dd_map_cnt);
         lv_dropdown_set_options(dd, opts);
-        uint32_t cnt = (uint32_t)g_profile_cnt + 1;
-        lv_dropdown_set_selected(dd, prev < cnt ? prev : 0);
+        lv_dropdown_set_selected(dd, 0);
     }
 }
 
