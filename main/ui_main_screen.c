@@ -48,6 +48,7 @@ typedef struct {
 static ch_state_t s_ch[2];
 static lv_obj_t  *lbl_time;
 static lv_obj_t  *lbl_unit_ind;
+static lv_obj_t  *lbl_bell;
 static int        s_clock_sec = 43200;
 
 /* ------------------------------------------------------------------ */
@@ -183,10 +184,10 @@ static void create_titlebar(lv_obj_t *scr)
     lv_obj_set_style_text_font(lbl_unit_ind, &roboto_cyrillic_16, 0);
     lv_obj_align(lbl_unit_ind, LV_ALIGN_LEFT_MID, 12, 0);
 
-    lv_obj_t *lbl_bell = lv_label_create(tb);
+    lbl_bell = lv_label_create(tb);
     lv_label_set_text(lbl_bell, LV_SYMBOL_BELL);
-    lv_obj_set_style_text_color(lbl_bell, lv_color_hex(0x7ec8e3), 0);
     lv_obj_align(lbl_bell, LV_ALIGN_RIGHT_MID, -54, 0);
+    ui_main_screen_update_sound();
 
     lv_obj_t *btn_gear = lv_button_create(tb);
     lv_obj_set_size(btn_gear, 40, 32);
@@ -514,10 +515,21 @@ static void create_divider(lv_obj_t *scr)
 /* ------------------------------------------------------------------ */
 /*  Public API                                                         */
 /* ------------------------------------------------------------------ */
+void ui_main_screen_update_sound(void)
+{
+    if (!lbl_bell) return;
+    bool muted = !g_settings.sound_en;
+    lv_obj_set_style_text_color(lbl_bell,
+        muted ? lv_color_hex(0x555555) : lv_color_hex(0x7ec8e3), 0);
+    lv_obj_set_style_text_decor(lbl_bell,
+        muted ? LV_TEXT_DECOR_STRIKETHROUGH : LV_TEXT_DECOR_NONE, 0);
+}
+
 void ui_main_screen_prepare_destroy(void)
 {
     lbl_time     = NULL;
     lbl_unit_ind = NULL;
+    lbl_bell     = NULL;
     memset(s_ch, 0, sizeof(s_ch));
 }
 

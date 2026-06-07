@@ -1,4 +1,5 @@
 #include "ui_sound_screen.h"
+#include "ui_main_screen.h"
 #include "ui_init.h"
 #include "ui_sub_screen.h"
 #include "ui_theme.h"
@@ -9,6 +10,7 @@
 static void sound_en_cb(lv_event_t *e)
 {
     g_settings.sound_en = lv_obj_has_state(lv_event_get_target(e), LV_STATE_CHECKED) ? 1 : 0;
+    ui_main_screen_update_sound();
     ui_nvs_save_debounced();
 }
 
