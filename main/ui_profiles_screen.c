@@ -40,7 +40,7 @@ void ui_profiles_screen_create(void)
         lv_label_set_text(lbl, g_profiles[i].name);
         lv_obj_set_style_text_color(lbl, ui_color_text_primary(), 0);
         lv_obj_set_style_text_font(lbl, &roboto_cyrillic_16, 0);
-        lv_obj_align(lbl, LV_ALIGN_LEFT_MID, 0, 0);
+        lv_obj_align(lbl, LV_ALIGN_LEFT_MID, 0, -10);
 
         /* PID + tool type summary */
         char info[56];
@@ -58,7 +58,7 @@ void ui_profiles_screen_create(void)
         lv_label_set_text(lbl_info, info);
         lv_obj_set_style_text_color(lbl_info, ui_color_text_secondary(), 0);
         lv_obj_set_style_text_font(lbl_info, &roboto_cyrillic_12, 0);
-        lv_obj_align(lbl_info, LV_ALIGN_LEFT_MID, 0, 14);
+        lv_obj_align(lbl_info, LV_ALIGN_LEFT_MID, 0, 10);
 
         /* Edit button */
         lv_obj_t *btn = lv_obj_create(row);
