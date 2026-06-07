@@ -13,6 +13,7 @@ idf_component_register(
         "ui_display_screen.c"
         "ui_units_screen.c"
         "ui_profiles_screen.c"
+        "ui_profile_edit_screen.c"
         "ui_about_screen.c"
         "ui_ch_settings_screen.c"
         "ui_sub_screen.c"

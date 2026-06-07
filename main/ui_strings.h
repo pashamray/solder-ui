@@ -46,6 +46,17 @@ typedef struct {
     const char *alert_overheat;
     const char *alert_ready;
     const char *ch_color;
+    /* profiles */
+    const char *add_profile;
+    const char *edit_profile;
+    const char *delete_profile;
+    const char *profile_name;
+    const char *pid_kp;
+    const char *pid_ki;
+    const char *pid_kd;
+    const char *temp_offset;
+    const char *apply_ch1;
+    const char *apply_ch2;
 } ui_strings_t;
 extern const ui_strings_t *ui_lang;
 void ui_strings_init(void);

@@ -3,6 +3,11 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "esp_log.h"
+#include <string.h>
+#include <stdio.h>
+
+ui_profile_t g_profiles[MAX_PROFILES];
+uint8_t      g_profile_cnt = 0;
 
 #define NVS_NS "solder_ui"
 static const char *TAG = "ui_nvs";
@@ -32,6 +37,8 @@ ui_settings_t g_settings = {
     .temp_step       = 5,
     .ch1_color_idx   = 0,
     .ch2_color_idx   = 1,
+    .ch1_pid_kp = 10, .ch1_pid_ki = 5, .ch1_pid_kd = 2, .ch1_temp_offset = 0,
+    .ch2_pid_kp = 10, .ch2_pid_ki = 5, .ch2_pid_kd = 2, .ch2_temp_offset = 0,
 };
 
 void ui_nvs_load(void)
@@ -82,8 +89,39 @@ void ui_nvs_load(void)
     nvs_get_u8 (h, "t_step",   &g_settings.temp_step);
     nvs_get_u8 (h, "ch1_col",  &g_settings.ch1_color_idx);
     nvs_get_u8 (h, "ch2_col",  &g_settings.ch2_color_idx);
+    nvs_get_u8 (h, "ch1_kp",   &g_settings.ch1_pid_kp);
+    nvs_get_u8 (h, "ch1_ki",   &g_settings.ch1_pid_ki);
+    nvs_get_u8 (h, "ch1_kd",   &g_settings.ch1_pid_kd);
+    { uint8_t v = (uint8_t)g_settings.ch1_temp_offset; nvs_get_u8(h,"ch1_toff",&v); g_settings.ch1_temp_offset=(int8_t)v; }
+    nvs_get_u8 (h, "ch2_kp",   &g_settings.ch2_pid_kp);
+    nvs_get_u8 (h, "ch2_ki",   &g_settings.ch2_pid_ki);
+    nvs_get_u8 (h, "ch2_kd",   &g_settings.ch2_pid_kd);
+    { uint8_t v = (uint8_t)g_settings.ch2_temp_offset; nvs_get_u8(h,"ch2_toff",&v); g_settings.ch2_temp_offset=(int8_t)v; }
 
     nvs_close(h);
+
+    /* Load profiles */
+    nvs_handle_t ph;
+    if (nvs_open(NVS_NS, NVS_READONLY, &ph) == ESP_OK) {
+        nvs_get_u8(ph, "prof_cnt", &g_profile_cnt);
+        if (g_profile_cnt > MAX_PROFILES) g_profile_cnt = MAX_PROFILES;
+        for (int i = 0; i < g_profile_cnt; i++) {
+            char key[16];
+            size_t sz = PROFILE_NAME_LEN;
+            snprintf(key, sizeof(key), "p%d_nm", i);
+            nvs_get_str(ph, key, g_profiles[i].name, &sz);
+            snprintf(key, sizeof(key), "p%d_kp", i);
+            nvs_get_u8(ph, key, &g_profiles[i].pid_kp);
+            snprintf(key, sizeof(key), "p%d_ki", i);
+            nvs_get_u8(ph, key, &g_profiles[i].pid_ki);
+            snprintf(key, sizeof(key), "p%d_kd", i);
+            nvs_get_u8(ph, key, &g_profiles[i].pid_kd);
+            snprintf(key, sizeof(key), "p%d_off", i);
+            uint8_t off = 0; nvs_get_u8(ph, key, &off);
+            g_profiles[i].temp_offset = (int8_t)off;
+        }
+        nvs_close(ph);
+    }
     ESP_LOGI(TAG, "loaded: ch1=%d ch2=%d theme=%d lang=%d",
              g_settings.ch1_sp, g_settings.ch2_sp,
              g_settings.theme, g_settings.language);
@@ -127,6 +165,14 @@ static void nvs_save_cb(lv_timer_t *t)
     nvs_set_u8 (h, "t_step",   g_settings.temp_step);
     nvs_set_u8 (h, "ch1_col",  g_settings.ch1_color_idx);
     nvs_set_u8 (h, "ch2_col",  g_settings.ch2_color_idx);
+    nvs_set_u8 (h, "ch1_kp",   g_settings.ch1_pid_kp);
+    nvs_set_u8 (h, "ch1_ki",   g_settings.ch1_pid_ki);
+    nvs_set_u8 (h, "ch1_kd",   g_settings.ch1_pid_kd);
+    nvs_set_u8 (h, "ch1_toff", (uint8_t)g_settings.ch1_temp_offset);
+    nvs_set_u8 (h, "ch2_kp",   g_settings.ch2_pid_kp);
+    nvs_set_u8 (h, "ch2_ki",   g_settings.ch2_pid_ki);
+    nvs_set_u8 (h, "ch2_kd",   g_settings.ch2_pid_kd);
+    nvs_set_u8 (h, "ch2_toff", (uint8_t)g_settings.ch2_temp_offset);
 
     nvs_commit(h);
     nvs_close(h);
@@ -138,4 +184,26 @@ void ui_nvs_save_debounced(void)
     if (s_save_timer) lv_timer_delete(s_save_timer);
     s_save_timer = lv_timer_create(nvs_save_cb, 500, NULL);
     lv_timer_set_repeat_count(s_save_timer, 1);
+}
+
+void ui_nvs_save_profiles(void)
+{
+    nvs_handle_t h;
+    if (nvs_open(NVS_NS, NVS_READWRITE, &h) != ESP_OK) return;
+    nvs_set_u8(h, "prof_cnt", g_profile_cnt);
+    for (int i = 0; i < g_profile_cnt; i++) {
+        char key[16];
+        snprintf(key, sizeof(key), "p%d_nm", i);
+        nvs_set_str(h, key, g_profiles[i].name);
+        snprintf(key, sizeof(key), "p%d_kp", i);
+        nvs_set_u8(h, key, g_profiles[i].pid_kp);
+        snprintf(key, sizeof(key), "p%d_ki", i);
+        nvs_set_u8(h, key, g_profiles[i].pid_ki);
+        snprintf(key, sizeof(key), "p%d_kd", i);
+        nvs_set_u8(h, key, g_profiles[i].pid_kd);
+        snprintf(key, sizeof(key), "p%d_off", i);
+        nvs_set_u8(h, key, (uint8_t)g_profiles[i].temp_offset);
+    }
+    nvs_commit(h);
+    nvs_close(h);
 }

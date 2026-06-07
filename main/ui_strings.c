@@ -45,6 +45,16 @@ static const ui_strings_t LANG_RU = {
     .alert_overheat         = "Алерт перегрева",
     .alert_ready            = "Сигнал прогрева",
     .ch_color               = "Цвет канала",
+    .add_profile            = "Добавить",
+    .edit_profile           = "Изменить",
+    .delete_profile         = "Удалить",
+    .profile_name           = "Имя",
+    .pid_kp                 = "Kp",
+    .pid_ki                 = "Ki",
+    .pid_kd                 = "Kd",
+    .temp_offset            = "Смещение",
+    .apply_ch1              = "Применить CH1",
+    .apply_ch2              = "Применить CH2",
 };
 
 static const ui_strings_t LANG_EN = {
@@ -92,6 +102,16 @@ static const ui_strings_t LANG_EN = {
     .alert_overheat         = "Overheat alert",
     .alert_ready            = "Ready alert",
     .ch_color               = "Channel color",
+    .add_profile            = "Add",
+    .edit_profile           = "Edit",
+    .delete_profile         = "Delete",
+    .profile_name           = "Name",
+    .pid_kp                 = "Kp",
+    .pid_ki                 = "Ki",
+    .pid_kd                 = "Kd",
+    .temp_offset            = "Offset",
+    .apply_ch1              = "Apply CH1",
+    .apply_ch2              = "Apply CH2",
 };
 
 static const ui_strings_t LANG_DE = {
@@ -139,6 +159,16 @@ static const ui_strings_t LANG_DE = {
     .alert_overheat         = "Überhitzungsalarm",
     .alert_ready            = "Bereit-Signal",
     .ch_color               = "Kanalfarbe",
+    .add_profile            = "Hinzufügen",
+    .edit_profile           = "Bearbeiten",
+    .delete_profile         = "Löschen",
+    .profile_name           = "Name",
+    .pid_kp                 = "Kp",
+    .pid_ki                 = "Ki",
+    .pid_kd                 = "Kd",
+    .temp_offset            = "Offset",
+    .apply_ch1              = "Anwenden CH1",
+    .apply_ch2              = "Anwenden CH2",
 };
 
 static const ui_strings_t LANG_UK = {
@@ -186,6 +216,16 @@ static const ui_strings_t LANG_UK = {
     .alert_overheat         = "Алерт перегріву",
     .alert_ready            = "Сигнал прогріву",
     .ch_color               = "Колір каналу",
+    .add_profile            = "Додати",
+    .edit_profile           = "Змінити",
+    .delete_profile         = "Видалити",
+    .profile_name           = "Ім'я",
+    .pid_kp                 = "Kp",
+    .pid_ki                 = "Ki",
+    .pid_kd                 = "Kd",
+    .temp_offset            = "Зміщення",
+    .apply_ch1              = "Застосувати CH1",
+    .apply_ch2              = "Застосувати CH2",
 };
 
 #define LANG_COUNT 4

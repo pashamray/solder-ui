@@ -12,6 +12,7 @@ extern lv_obj_t *scr_profiles;
 extern lv_obj_t *scr_about;
 extern lv_obj_t *scr_ch1_settings;
 extern lv_obj_t *scr_ch2_settings;
+extern lv_obj_t *scr_profile_edit;
 
 void app_ui_init(void);
 void ui_rebuild_all(void);

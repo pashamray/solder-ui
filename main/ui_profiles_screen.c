@@ -1,6 +1,6 @@
 #include "fonts/fonts.h"
 #include "ui_profiles_screen.h"
-#include "ui_main_screen.h"
+#include "ui_profile_edit_screen.h"
 #include "ui_init.h"
 #include "ui_sub_screen.h"
 #include "ui_theme.h"
@@ -8,79 +8,86 @@
 #include "ui_nvs.h"
 #include "lvgl.h"
 
-typedef struct { const char *name; uint16_t ch1; uint16_t ch2; } preset_t;
-
-static const preset_t PRESETS[3] = {
-    { "Lead-free", 250, 250 },
-    { "Leaded",    320, 320 },
-    { "Fine work", 350, 350 },
-};
-
-static void apply_preset_cb(lv_event_t *e)
+static void open_edit_cb(lv_event_t *e)
 {
-    const preset_t *p = (const preset_t *)lv_event_get_user_data(e);
-    g_settings.ch1_sp = p->ch1;
-    g_settings.ch2_sp = p->ch2;
-    ui_main_screen_refresh_sp();
-    ui_nvs_save_debounced();
+    int idx = (int)(intptr_t)lv_event_get_user_data(e);
+    ui_profile_edit_open(idx);
 }
 
-static void save_current_cb(lv_event_t *e)
+static void add_cb(lv_event_t *e)
 {
     (void)e;
-    ui_nvs_save_debounced();
+    ui_profile_edit_open(-1);
 }
 
 void ui_profiles_screen_create(void)
 {
     lv_obj_t *body = ui_sub_screen_create(&scr_profiles, ui_lang->profiles);
 
-    for (int i = 0; i < 3; i++) {
-        /* Clickable row */
+    /* Profile list */
+    for (int i = 0; i < (int)g_profile_cnt; i++) {
         lv_obj_t *row = lv_obj_create(body);
-        lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_set_size(row, LV_PCT(100), 56);
         lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_set_style_bg_color(row, ui_color_surface(), 0);
         lv_obj_set_style_border_width(row, 0, 0);
         lv_obj_set_style_radius(row, 8, 0);
-        lv_obj_set_style_pad_all(row, 14, 0);
-        lv_obj_add_flag(row, LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_bg_color(row, lv_color_mix(ui_color_surface(),
-                                                     lv_color_white(), 220),
-                                   LV_STATE_PRESSED);
-        lv_obj_add_event_cb(row, apply_preset_cb, LV_EVENT_CLICKED,
-                            (void *)&PRESETS[i]);
+        lv_obj_set_style_pad_hor(row, 14, 0);
+        lv_obj_set_style_pad_ver(row, 0, 0);
 
-        /* Preset name — left side */
-        lv_obj_t *lbl_name = lv_label_create(row);
-        lv_label_set_text(lbl_name, PRESETS[i].name);
-        lv_obj_set_style_text_color(lbl_name, ui_color_text_primary(), 0);
-        lv_obj_set_style_text_font(lbl_name, &roboto_cyrillic_14, 0);
-        lv_obj_align(lbl_name, LV_ALIGN_LEFT_MID, 0, 0);
+        /* Profile name */
+        lv_obj_t *lbl = lv_label_create(row);
+        lv_label_set_text(lbl, g_profiles[i].name);
+        lv_obj_set_style_text_color(lbl, ui_color_text_primary(), 0);
+        lv_obj_set_style_text_font(lbl, &roboto_cyrillic_16, 0);
+        lv_obj_align(lbl, LV_ALIGN_LEFT_MID, 0, 0);
 
-        /* Temperature values — right side */
-        char temp_buf[32];
-        lv_snprintf(temp_buf, sizeof(temp_buf),
-                    "CH1: %u\xc2\xb0  CH2: %u\xc2\xb0",
-                    (unsigned)PRESETS[i].ch1, (unsigned)PRESETS[i].ch2);
-        lv_obj_t *lbl_temps = lv_label_create(row);
-        lv_label_set_text(lbl_temps, temp_buf);
-        lv_obj_set_style_text_color(lbl_temps, ui_color_ch2(), 0);
-        lv_obj_set_style_text_font(lbl_temps, &roboto_cyrillic_14, 0);
-        lv_obj_align(lbl_temps, LV_ALIGN_RIGHT_MID, 0, 0);
+        /* PID summary */
+        char info[40];
+        lv_snprintf(info, sizeof(info), "Kp%d Ki%d Kd%d  %+d\xc2\xb0",
+                    (int)g_profiles[i].pid_kp,
+                    (int)g_profiles[i].pid_ki,
+                    (int)g_profiles[i].pid_kd,
+                    (int)g_profiles[i].temp_offset);
+        lv_obj_t *lbl_info = lv_label_create(row);
+        lv_label_set_text(lbl_info, info);
+        lv_obj_set_style_text_color(lbl_info, ui_color_text_secondary(), 0);
+        lv_obj_set_style_text_font(lbl_info, &roboto_cyrillic_12, 0);
+        lv_obj_align(lbl_info, LV_ALIGN_LEFT_MID, 0, 14);
+
+        /* Edit button */
+        lv_obj_t *btn = lv_obj_create(row);
+        lv_obj_set_size(btn, 80, 36);
+        lv_obj_remove_flag(btn, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_style_bg_color(btn, ui_color_accent(), 0);
+        lv_obj_set_style_border_width(btn, 0, 0);
+        lv_obj_set_style_radius(btn, 6, 0);
+        lv_obj_set_style_pad_all(btn, 0, 0);
+        lv_obj_add_flag(btn, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_align(btn, LV_ALIGN_RIGHT_MID, 0, 0);
+        lv_obj_add_event_cb(btn, open_edit_cb, LV_EVENT_CLICKED, (void*)(intptr_t)i);
+        lv_obj_t *lbl_btn = lv_label_create(btn);
+        lv_label_set_text(lbl_btn, ui_lang->edit_profile);
+        lv_obj_set_style_text_font(lbl_btn, &roboto_cyrillic_14, 0);
+        lv_obj_set_style_text_color(lbl_btn, lv_color_white(), 0);
+        lv_obj_align(lbl_btn, LV_ALIGN_CENTER, 0, 0);
     }
 
-    /* "Save current" button — full-width, 40 px height */
-    lv_obj_t *btn_save = lv_btn_create(body);
-    lv_obj_set_size(btn_save, LV_PCT(100), 40);
-    lv_obj_set_style_bg_color(btn_save, ui_color_accent(), 0);
-    lv_obj_set_style_radius(btn_save, 8, 0);
-    lv_obj_set_style_border_width(btn_save, 0, 0);
-    lv_obj_add_event_cb(btn_save, save_current_cb, LV_EVENT_CLICKED, NULL);
-
-    lv_obj_t *lbl_save = lv_label_create(btn_save);
-    lv_label_set_text(lbl_save, ui_lang->save_current);
-    lv_obj_set_style_text_color(lbl_save, lv_color_white(), 0);
-    lv_obj_set_style_text_font(lbl_save, &roboto_cyrillic_14, 0);
-    lv_obj_align(lbl_save, LV_ALIGN_CENTER, 0, 0);
+    /* [+ Add] button */
+    if (g_profile_cnt < MAX_PROFILES) {
+        lv_obj_t *btn_add = lv_obj_create(body);
+        lv_obj_set_size(btn_add, LV_PCT(100), 44);
+        lv_obj_remove_flag(btn_add, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_style_bg_color(btn_add, ui_color_border(), 0);
+        lv_obj_set_style_border_width(btn_add, 0, 0);
+        lv_obj_set_style_radius(btn_add, 8, 0);
+        lv_obj_set_style_pad_all(btn_add, 0, 0);
+        lv_obj_add_flag(btn_add, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_add_event_cb(btn_add, add_cb, LV_EVENT_CLICKED, NULL);
+        lv_obj_t *lbl_add = lv_label_create(btn_add);
+        lv_label_set_text(lbl_add, ui_lang->add_profile);
+        lv_obj_set_style_text_font(lbl_add, &roboto_cyrillic_16, 0);
+        lv_obj_set_style_text_color(lbl_add, ui_color_text_primary(), 0);
+        lv_obj_align(lbl_add, LV_ALIGN_CENTER, 0, 0);
+    }
 }

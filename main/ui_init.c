@@ -12,6 +12,7 @@
 #include "ui_profiles_screen.h"
 #include "ui_about_screen.h"
 #include "ui_ch_settings_screen.h"
+#include "ui_profile_edit_screen.h"
 #include "esp_lvgl_port.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -24,8 +25,9 @@ lv_obj_t *scr_display      = NULL;
 lv_obj_t *scr_units        = NULL;
 lv_obj_t *scr_profiles     = NULL;
 lv_obj_t *scr_about        = NULL;
-lv_obj_t *scr_ch1_settings = NULL;
-lv_obj_t *scr_ch2_settings = NULL;
+lv_obj_t *scr_ch1_settings  = NULL;
+lv_obj_t *scr_ch2_settings  = NULL;
+lv_obj_t *scr_profile_edit  = NULL;
 
 static bool s_rebuild_to_settings = false;
 
@@ -49,6 +51,7 @@ static void do_rebuild(void *data)
     if (scr_about)         { lv_obj_delete(scr_about);         scr_about = NULL; }
     if (scr_ch1_settings)  { lv_obj_delete(scr_ch1_settings);  scr_ch1_settings = NULL; }
     if (scr_ch2_settings)  { lv_obj_delete(scr_ch2_settings);  scr_ch2_settings = NULL; }
+    if (scr_profile_edit)  { lv_obj_delete(scr_profile_edit);  scr_profile_edit = NULL; }
 
     ui_main_screen_create();
     ui_settings_screen_create();

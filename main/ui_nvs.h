@@ -1,6 +1,21 @@
 #pragma once
 #include <stdint.h>
 
+/* ── Profiles ── */
+#define MAX_PROFILES     8
+#define PROFILE_NAME_LEN 16
+
+typedef struct {
+    char    name[PROFILE_NAME_LEN];
+    int8_t  temp_offset;   /* °C, -20..+20 */
+    uint8_t pid_kp;        /* 0..99 */
+    uint8_t pid_ki;        /* 0..99 */
+    uint8_t pid_kd;        /* 0..99 */
+} ui_profile_t;
+
+extern ui_profile_t g_profiles[MAX_PROFILES];
+extern uint8_t      g_profile_cnt;
+
 /* Channel tool type */
 #define CH_TYPE_IRON   0
 #define CH_TYPE_GUN    1   /* hot air gun — has airflow setpoint */
@@ -31,8 +46,18 @@ typedef struct {
     uint8_t  temp_step;          /* temperature step in °C (1–20) */
     uint8_t  ch1_color_idx;      /* index into CH_COLORS palette */
     uint8_t  ch2_color_idx;
+    /* active PID + offset per channel (copied from profile on Apply) */
+    uint8_t  ch1_pid_kp;
+    uint8_t  ch1_pid_ki;
+    uint8_t  ch1_pid_kd;
+    int8_t   ch1_temp_offset;
+    uint8_t  ch2_pid_kp;
+    uint8_t  ch2_pid_ki;
+    uint8_t  ch2_pid_kd;
+    int8_t   ch2_temp_offset;
 } ui_settings_t;
 
 extern ui_settings_t g_settings;
 void ui_nvs_load(void);
 void ui_nvs_save_debounced(void);
+void ui_nvs_save_profiles(void);

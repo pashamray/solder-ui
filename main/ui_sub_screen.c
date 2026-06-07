@@ -14,7 +14,15 @@ static void back_to_settings_cb(lv_event_t *e)
     lv_screen_load_anim(scr_settings, LV_SCREEN_LOAD_ANIM_NONE, 0, 0, false);
 }
 
-lv_obj_t *ui_sub_screen_create(lv_obj_t **scr_handle, const char *title)
+static void back_to_custom_cb(lv_event_t *e)
+{
+    lv_obj_t **target = (lv_obj_t **)lv_event_get_user_data(e);
+    if (target && *target)
+        lv_screen_load_anim(*target, LV_SCREEN_LOAD_ANIM_NONE, 0, 0, false);
+}
+
+static lv_obj_t *build_sub_screen(lv_obj_t **scr_handle, const char *title,
+                                   lv_event_cb_t back_cb, void *back_ud)
 {
     lv_obj_t *scr = lv_obj_create(NULL);
     lv_obj_remove_style_all(scr);
@@ -24,7 +32,6 @@ lv_obj_t *ui_sub_screen_create(lv_obj_t **scr_handle, const char *title)
     lv_obj_set_style_pad_all(scr, 0, 0);
     *scr_handle = scr;
 
-    /* Title bar */
     lv_obj_t *tb = lv_obj_create(scr);
     lv_obj_remove_style_all(tb);
     lv_obj_set_size(tb, LCD_W, TB_H);
@@ -37,7 +44,6 @@ lv_obj_t *ui_sub_screen_create(lv_obj_t **scr_handle, const char *title)
     lv_obj_set_style_border_width(tb, 1, LV_PART_MAIN);
     lv_obj_set_style_pad_all(tb, 0, 0);
 
-    /* Back button */
     lv_obj_t *btn_back = lv_button_create(tb);
     lv_obj_set_size(btn_back, LV_SIZE_CONTENT, 28);
     lv_obj_align(btn_back, LV_ALIGN_LEFT_MID, 12, 0);
@@ -46,21 +52,19 @@ lv_obj_t *ui_sub_screen_create(lv_obj_t **scr_handle, const char *title)
     lv_obj_set_style_border_width(btn_back, 0, 0);
     lv_obj_set_style_pad_hor(btn_back, 10, 0);
     lv_obj_set_style_pad_ver(btn_back, 0, 0);
-    lv_obj_add_event_cb(btn_back, back_to_settings_cb, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(btn_back, back_cb, LV_EVENT_CLICKED, back_ud);
     lv_obj_t *lbl_back = lv_label_create(btn_back);
     lv_label_set_text(lbl_back, ui_lang->back);
     lv_obj_set_style_text_color(lbl_back, lv_color_white(), 0);
     lv_obj_set_style_text_font(lbl_back, &roboto_cyrillic_16, 0);
     lv_obj_center(lbl_back);
 
-    /* Title */
     lv_obj_t *lbl_title = lv_label_create(tb);
     lv_label_set_text(lbl_title, title);
     lv_obj_set_style_text_color(lbl_title, ui_color_text_primary(), 0);
     lv_obj_set_style_text_font(lbl_title, &roboto_cyrillic_24, 0);
     lv_obj_center(lbl_title);
 
-    /* Body — covers full area below titlebar, bg prevents any stripe */
     lv_obj_t *body = lv_obj_create(scr);
     lv_obj_remove_style_all(body);
     lv_obj_remove_flag(body, LV_OBJ_FLAG_SCROLLABLE);
@@ -76,6 +80,16 @@ lv_obj_t *ui_sub_screen_create(lv_obj_t **scr_handle, const char *title)
     lv_obj_set_style_pad_row(body, 8, 0);
 
     return body;
+}
+
+lv_obj_t *ui_sub_screen_create(lv_obj_t **scr_handle, const char *title)
+{
+    return build_sub_screen(scr_handle, title, back_to_settings_cb, NULL);
+}
+
+lv_obj_t *ui_sub_screen_create2(lv_obj_t **scr_handle, const char *title, lv_obj_t **back_scr)
+{
+    return build_sub_screen(scr_handle, title, back_to_custom_cb, back_scr);
 }
 
 lv_obj_t *ui_sub_row_create(lv_obj_t *body, const char *name, const char *desc)
