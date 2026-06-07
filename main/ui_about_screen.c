@@ -126,7 +126,7 @@ void ui_about_screen_create(void)
     lv_obj_align(lbl_fw, LV_ALIGN_CENTER, 0, 0);
 
     /* Display row */
-    lv_obj_t *r2 = ui_sub_row_create(body, "Display", NULL);
+    lv_obj_t *r2 = ui_sub_row_create(body, ui_lang->display, NULL);
     lv_obj_t *lbl_disp = lv_label_create(r2);
     lv_label_set_text(lbl_disp, "1024\xc3\x97" "600 RGB");  /* × = U+00D7 */
     lv_obj_set_style_text_color(lbl_disp, ui_color_text_secondary(), 0);
