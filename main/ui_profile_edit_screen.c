@@ -43,7 +43,7 @@ static lv_obj_t *make_adj(lv_obj_t *body, const char *title,
     lv_obj_remove_style_all(row);
     lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_bg_color(row, lv_color_hex(0x1a1a2e), 0);
+    lv_obj_set_style_bg_color(row, ui_color_surface(), 0);
     lv_obj_set_style_bg_opa(row, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(row, 8, 0);
     lv_obj_set_style_pad_all(row, 12, 0);
@@ -51,7 +51,7 @@ static lv_obj_t *make_adj(lv_obj_t *body, const char *title,
     lv_obj_t *lbl = lv_label_create(row);
     lv_label_set_text(lbl, title);
     lv_obj_set_style_text_font(lbl, &roboto_cyrillic_16, 0);
-    lv_obj_set_style_text_color(lbl, lv_color_hex(0xaaaaaa), 0);
+    lv_obj_set_style_text_color(lbl, ui_color_text_secondary(), 0);
     lv_obj_align(lbl, LV_ALIGN_LEFT_MID, 0, 0);
 
     /* right side: [−] val [+] */
@@ -224,7 +224,7 @@ static void build_screen(void)
     lv_obj_remove_style_all(name_row);
     lv_obj_set_size(name_row, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_remove_flag(name_row, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_bg_color(name_row, lv_color_hex(0x1a1a2e), 0);
+    lv_obj_set_style_bg_color(name_row, ui_color_surface(), 0);
     lv_obj_set_style_bg_opa(name_row, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(name_row, 8, 0);
     lv_obj_set_style_pad_all(name_row, 12, 0);
@@ -232,7 +232,7 @@ static void build_screen(void)
     lv_obj_t *name_lbl = lv_label_create(name_row);
     lv_label_set_text(name_lbl, ui_lang->profile_name);
     lv_obj_set_style_text_font(name_lbl, &roboto_cyrillic_16, 0);
-    lv_obj_set_style_text_color(name_lbl, lv_color_hex(0xaaaaaa), 0);
+    lv_obj_set_style_text_color(name_lbl, ui_color_text_secondary(), 0);
     lv_obj_align(name_lbl, LV_ALIGN_LEFT_MID, 0, 0);
 
     lv_obj_t *ta = lv_textarea_create(name_row);
