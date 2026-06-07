@@ -532,16 +532,6 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
         lv_obj_set_flex_flow(ctrl_pair, LV_FLEX_FLOW_ROW);
         lv_obj_set_style_flex_cross_place(ctrl_pair, LV_FLEX_ALIGN_START, 0);
 
-        uint8_t af = (ch == 0) ? g_settings.ch1_airflow : g_settings.ch2_airflow;
-        char af_buf[8];
-        snprintf(af_buf, sizeof(af_buf), "%d%%", af);
-        lv_obj_t *af_cell = make_ctrl_cell(ctrl_pair, ui_lang->airflow,
-                                            on_af_minus, on_af_plus, ud,
-                                            af_buf, ui_color_text_secondary(), &roboto_cyrillic_24,
-                                            &s_ch[ch].lbl_af);
-        lv_obj_set_width(af_cell, 0);
-        lv_obj_set_flex_grow(af_cell, 1);
-
         uint16_t sp = (ch == 0) ? g_settings.ch1_sp : g_settings.ch2_sp;
         char sp_buf[8];
         snprintf(sp_buf, sizeof(sp_buf), "%d", to_disp((int)sp));
@@ -551,6 +541,16 @@ static void create_channel_panel(lv_obj_t *scr, int ch)
                                             &s_ch[ch].lbl_sp);
         lv_obj_set_width(sp_cell, 0);
         lv_obj_set_flex_grow(sp_cell, 1);
+
+        uint8_t af = (ch == 0) ? g_settings.ch1_airflow : g_settings.ch2_airflow;
+        char af_buf[8];
+        snprintf(af_buf, sizeof(af_buf), "%d%%", af);
+        lv_obj_t *af_cell = make_ctrl_cell(ctrl_pair, ui_lang->airflow,
+                                            on_af_minus, on_af_plus, ud,
+                                            af_buf, ui_color_text_secondary(), &roboto_cyrillic_24,
+                                            &s_ch[ch].lbl_af);
+        lv_obj_set_width(af_cell, 0);
+        lv_obj_set_flex_grow(af_cell, 1);
     } else {
         /* IRON: setpoint full width */
         uint16_t sp = (ch == 0) ? g_settings.ch1_sp : g_settings.ch2_sp;
