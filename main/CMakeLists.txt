@@ -22,7 +22,6 @@ idf_component_register(
         "fonts/roboto_cyrillic_16.c"
         "fonts/roboto_cyrillic_24.c"
         "fonts/roboto_pm_32.c"
-        "fonts/roboto_48.c"
         "fonts/roboto_160.c"
     INCLUDE_DIRS "." "fonts"
     REQUIRES driver esp_lcd nvs_flash
